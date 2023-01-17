@@ -1,0 +1,7 @@
+#  IdxSize(byte)	       usec/pat	       usec/occ	           occs	        numpats	     sourcesize	#oper	#repeats	#indexBaseName
+      2470183691	    2.292000000	    0.164560597	           6964	            500	     2790508860	#sVV0	#   1000	#indexes/dbpedia4
+      1985941527	    2.550000000	    0.183084434	           6964	            500	     2790508860	#sVV0	#   1000	#indexes/dbpedia8
+      1740636659	    3.630000000	    0.260626077	           6964	            500	     2790508860	#sVV0	#   1000	#indexes/dbpedia16
+      1615527011	    3.802000000	    0.272975302	           6964	            500	     2790508860	#sVV0	#   1000	#indexes/dbpedia32
+      1552676615	    5.336000000	    0.383113153	           6964	            500	     2790508860	#sVV0	#   1000	#indexes/dbpedia64
+      1497552135	   26.298000000	    1.888139001	           6964	            500	     2790508860	#sVV0	#   1000	#indexes/dbpedia512

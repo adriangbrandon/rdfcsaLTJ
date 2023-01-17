@@ -1,0 +1,58 @@
+#!/bin/bash
+#Usage: ../benchmark <graphIdx> <queryFile> <tipoQuery> <iters> [<numQueries> [<numPred> <numSO> ]]
+
+rm ???.dat
+echo '----- SPO ------------------------------'
+../benchmark indexes/dblp dblp.queries/spo.txt 1 1 #499
+
+echo '----- SP* ------------------------------'
+../benchmark indexes/dblp dblp.queries/spV.txt 2 1 #500
+
+echo '----- *PO ------------------------------'
+../benchmark indexes/dblp dblp.queries/Vpo.txt 3 1 #467 
+                                                   
+echo '----- S*O ------------------------------'    
+../benchmark indexes/dblp dblp.queries/sVo.txt 4 1 #500 
+                                                   
+echo '----- S** ------------------------------'    
+../benchmark indexes/dblp dblp.queries/sVV.txt 5 1 #500 
+                                                   
+echo '----- *P* ------------------------------'    
+../benchmark indexes/dblp dblp.queries/VpV.txt 6 1 # 27 
+                                                   
+echo '----- **O ------------------------------'    
+../benchmark indexes/dblp dblp.queries/VVo.txt 7 1 #500 
+
+
+#echo '----- 71'
+#bin/use_tree ../data/dblp/k2triples/predicado 27 ../data/dblp/queries/simples/VVo.txt 500  ../data/dblp/dacS/spDAC ../data/dblp/dacO/spDAC 1 71
+#echo '----- 72'
+#bin/use_tree ../data/dblp/k2triples/predicado 27 ../data/dblp/queries/simples/VVo.txt 500  ../data/dblp/dacS/spDAC ../data/dblp/dacO/spDAC 1 72
+#echo '----- 6'
+#bin/use_tree ../data/dblp/k2triples/predicado 27 ../data/dblp/queries/simples/VpV.txt 27  ../data/dblp/dacS/spDAC ../data/dblp/dacO/spDAC 1 6
+#echo '-------- 51'
+#bin/use_tree ../data/dblp/k2triples/predicado 27 ../data/dblp/queries/simples/sVV.txt 500  ../data/dblp/dacS/spDAC ../data/dblp/dacO/spDAC 1 51
+#echo '-------- 52'
+#bin/use_tree ../data/dblp/k2triples/predicado 27 ../data/dblp/queries/simples/sVV.txt 500  ../data/dblp/dacS/spDAC ../data/dblp/dacO/spDAC 1 52
+#echo '--------- 41'
+#bin/use_tree ../data/dblp/k2triples/predicado 27 ../data/dblp/queries/simples/sVo.txt 500  ../data/dblp/dacS/spDAC ../data/dblp/dacO/spDAC 1 41
+#echo '--------- 42'
+#bin/use_tree ../data/dblp/k2triples/predicado 27 ../data/dblp/queries/simples/sVo.txt 500  ../data/dblp/dacS/spDAC ../data/dblp/dacO/spDAC 1 42
+#echo '--------- 43'
+#bin/use_tree ../data/dblp/k2triples/predicado 27 ../data/dblp/queries/simples/sVo.txt 500  ../data/dblp/dacS/spDAC ../data/dblp/dacO/spDAC 1 43
+#echo '---------- 3'
+#bin/use_tree ../data/dblp/k2triples/predicado 27 ../data/dblp/queries/simples/Vpo.txt 467  ../data/dblp/dacS/spDAC ../data/dblp/dacO/spDAC 1 3
+#echo '--------- 2'
+#bin/use_tree ../data/dblp/k2triples/predicado 27 ../data/dblp/queries/simples/spV.txt 500  ../data/dblp/dacS/spDAC ../data/dblp/dacO/spDAC 1 2
+#echo '--------- 1'
+#bin/use_tree ../data/dblp/k2triples/predicado 27 ../data/dblp/queries/simples/spo.txt 500  ../data/dblp/dacS/spDAC ../data/dblp/dacO/spDAC 1 1
+#
+
+
+mv spo.dat  dblp.spo.dat
+mv spV.dat  dblp.spV.dat
+mv sVo.dat  dblp.sVo.dat
+mv sVV.dat  dblp.sVV.dat
+mv Vpo.dat  dblp.Vpo.dat
+mv VpV.dat  dblp.VpV.dat
+mv VVo.dat  dblp.VVo.dat

@@ -1,0 +1,4 @@
+mkdir indexes
+#zcat ./texts/cnlong.txt.gz | ../BUILDSORTwcsa stdin ./indexes/cnlong
+
+../BUILDSORTwcsa ./texts/cnlong.txt ./indexes/cnlong.txt

@@ -1,0 +1,115 @@
+
+ -------------------------------
+ Processing file: ./texts/wiki/wikidata-filtered-enumerated.dat.new
+ -------------------------------
+         processed 100.00% (1713.0 of 1713.0 MiBytes); :: ntriples = 81426573, Memusage data (931.9 MiBytes)
+
+ -------------------------------
+ summary:
+ num triples = 81426574
+ 244279722 uints read ==> first triple = <16949722 1 35625687>  -- last triple -1  = <1 2101 19227373> -- last triple (dummie)  = <0 0 14357810>
+
+ mins =         1, maxs=  19227372
+ minp =         1, maxp=      2101
+ mino =         1, maxo=  37641486
+ -------------------------------
+
+ ----- after parseAdrian-------------------
+ graph->n =  81426574
+ graph->ns =  19227373, graph->np=      2102, graph->no=  37641487, graph->nso=   4869562
+ graph->gaps =[ 0, 19227373, 4871665, 56870962]
+ graph->gapobjects =  14357810 ]
+
+--- ORDEN SPO----
+
+  parameters: "sourceFormat=ADRIAN;sPsi=16; nsHuff=16;psiSF=4"
+
+ SUBJECTS: minID found in source= 0, maxID= 19227372 :: collection-S = 19227373
+ PREDICTS: minID found in source= 0, maxID= 2101 :: collection-P = 2102
+ OBJJECTS: minID found in source= 14357810, maxID= 51999296 :: collection-O = 37641487
+ SUBJECTS-OBJECTS is 4869562
+ GAPS=
+ GAPS[0]= 0
+ GAPS[1]= 19227373
+ GAPS[2]= 4871665
+ GAPS[3]= 56870962
+
+ antes de sumar gaps
+ SE[0]= 0
+ SE[1]= 0
+ SE[2]= 14357810
+ SE[3]= 1
+ SE[4]= 2101
+ SE[5]= 19227373
+ SE[6]= 2
+ SE[7]= 2101
+
+ tras sumar gaps
+ SE[0]= 0
+ SE[1]= 19227373
+ SE[2]= 19229475
+ SE[3]= 1
+ SE[4]= 19229474
+ SE[5]= 24099038
+ SE[6]= 2
+ SE[7]= 19229474
+ SE[244279719]= 19227372
+ SE[244279720]= 19228921
+ SE[244279721]= 22206841
+ SE[244279722]= 56870962
+ SUBJECTS: minID found in source2= 0, maxID= 19227372 :: collection-S = 19227373
+ PREDICTS: minID found in source2= 19227373, maxID= 19229474 :: collection-S = 2102
+ OBJJECTS: minID found in source2= 19229475, maxID= 56870961 :: collection-S = 37641487
+ SUBJECTS-OBJECTS-2 is 4869562
+
+-----ORDEN OPS --------
+ GAPS=
+ GAPS[0]= -14357810
+ GAPS[1]= 37641487
+ GAPS[2]= 37643589
+ GAPS[3]= 56870962
+
+ antes de sumar gaps
+ SE[0]= 14357810
+ SE[1]= 0
+ SE[2]= 0
+ SE[3]= 14357811
+ SE[4]= 2093
+ SE[5]= 9502
+ SE[6]= 14357812
+ SE[7]= 2098
+
+ tras sumar gaps
+ SE[0]= 0
+ SE[1]= 37641487
+ SE[2]= 37643589
+ SE[3]= 1
+ SE[4]= 37643580
+ SE[5]= 37653091
+ SE[6]= 2
+ SE[7]= 37643585
+ SE[244279719]= 37641486
+ SE[244279720]= 37643029
+ SE[244279721]= 52000114
+ SE[244279722]= 56870962
+ SUBJECTS: minID found in source2= 0, maxID= 37641486 :: collection-S = 19227373
+ PREDICTS: minID found in source2= 37641487, maxID= 37643588 :: collection-S = 2102
+ OBJJECTS: minID found in source2= 37643589, maxID= 56870961 :: collection-S = 37641487
+ SUBJECTS-OBJECTS-2 is 4869562
+
+
+
+..........
+..........
+
+ ------- INI: COMPARING SPO and OPS recovered sequences ---------
+
+                CALL TO dumpSourceOPS_to_SPO DATA
+
+                OPS.data[0..6] = <0, 0,0><1,2093,9502>
+                OPS.data-shiftedSPO-and-inSPOorder[0..6] = <0, 0,0><1,2101,4869563>
+ len-spo = 244279722, len-ops = 244279722
+ --DISTINTOS (pos 2)!! --
+
+
+ ------- END: COMPARING SPO and OPS recovered sequences ---------

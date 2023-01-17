@@ -1,0 +1,335 @@
+
+#######################################################################
+# CHOOSE PSI COMPRESSION TYPE
+#######################################################################
+#see defValues.h
+#export PSITYPE=PSI_R3H
+#export PSITYPE=PSI_R3H_GAPS
+#export PSITYPE=PSI_HUFFMANRLE
+#export PSITYPE=PSI_VBYTERLE
+#export PSITYPE=XX    #uses the default in defValues.h
+
+#######################################################################
+
+ifeq ($(PSITYPE),PSI_HUFFMANRLE)
+	PSI_FLAGS = -DPSI_HUFFMANRLE
+else ifeq ($(PSITYPE),PSI_VBYTERLE)
+	PSI_FLAGS = -DPSI_VBYTERLE
+	
+else ifeq ($(PSITYPE),PSI_PLAIN)
+	PSI_FLAGS = -DPSI_PLAIN
+
+
+else ifeq ($(PSITYPE),PSI_R3H_GAPS)
+	PSI_FLAGS = -DPSI_R3H -DR3H_WITHGAPS
+else ifeq ($(PSITYPE),PSI_R3H)
+	PSI_FLAGS = -DPSI_R3H 
+
+
+else ifeq ($(PSITYPE),PSI_R3HYBRID)
+	PSI_FLAGS = -DPSI_R3HYBRID -DPSI_PLAIN_LOG_BASED
+else ifeq ($(PSITYPE),PSI_R3HYBRID_GAPS)
+	PSI_FLAGS = -DPSI_R3HYBRID -DPSI_PLAIN_LOG_BASED -DR3H_WITHGAPS 
+else ifeq ($(PSITYPE),PSI_R3HYBRID_UINT32)
+	PSI_FLAGS = -DPSI_R3HYBRID 
+	
+
+else
+	PSI_FLAGS = -DNONE 
+	export PSITYPE=XX
+endif
+
+
+
+#######################################################################
+# CHOOSE D BITMAP COMPRESSION STRATEGY
+#######################################################################
+#export BITMAPTYPE=BITMAP_375
+#export BITMAPTYPE=BITMAP_RGK
+#######################################################################
+
+##SOLO PERMITO YA BITMAP_375 ==> VER ICSA.C ICSA.H  --> COMENTADO CON//@NOLONGERRGK-2023
+
+ifeq ($(BITMAPTYPE),BITMAP_375)
+	EXE_SUFFIXBITMAP=
+else ifeq ($(BITMAPTYPE),BITMAP_RGK)
+	EXE_SUFFIXBITMAP=_RGK
+else
+	EXE_SUFFIXBITMAP = -DZZ      ## NO USADO
+	export BITMAPTYPE=ZZ         ## NO USADO
+endif
+ 
+#######################################################################
+
+#### Compilation options (32/64 bit)
+CC          = g++
+
+##options: 
+	## -DSKIPMAXMINDEF   --> if min/max macros cause redefinition, this avoids defining min/max    (see src/utils/basics.h)
+	## -DSKIP_CHECK_PSI_WORKS_OK  --> after compressing Psi, skips performing decompression check. (see src/intIndexUtils/*.c)
+	## -DSHOW_RESULTS      --> show the results of each query  (2020, not sure it actually does:D) (see src/benchmark.cpp)
+	## Variantes de select:
+	## SELECT_BASE (dous select, sen samples), SELECT_SAMPLES (dous select, con samples), SELECT_DUAL (dual_select)
+     
+GENFLAGS = -DEXPERIMENTS -DNDEBUG -DSKIPMAXMINDEF 
+#GENFLAGS = -DEXPERIMENTS -DNDEBUG -DSKIPMAXMINDEF -DSKIP_CHECK_PSI_WORKS_OK
+
+
+
+	########################
+	### type of bitmaps used
+		## original bitmap in iCSA implementation. 
+		#export CFLAGS  =  -O9  -m64 -DEXPERIMENTS -DNDEBUG  -DBITMAP_375
+
+		## uses libcds BitSequence, it builts D with the bitSequenceBuilder 
+		##   uncommented at src/intIndexQsort/icsa.c see: //@@fari2017 
+		#export CFLAGS  =  -O9 -m64 -DEXPERIMENTS -DNDEBUG  -DBITMAP_RGK
+########################
+
+#export CFLAGS  =  -O0 -g   -m64 $(GENFLAGS) -D$(BITMAPTYPE) $(PSI_FLAGS)
+export CFLAGS  =  -O9   -m64 $(GENFLAGS) -D$(BITMAPTYPE) $(PSI_FLAGS)
+
+			#export CFLAGS  =  -O9   -m64 -DEXPERIMENTS -DNDEBUG  -DBITMAP_RGK -D$(PSITYPE)
+			#export CFLAGS  =  -O9   -m64 -DEXPERIMENTS -DNDEBUG -DSKIPMAXMINDEF -DBITMAP_375 $(PSI_FLAGS)
+			#export CFLAGS  =  -O9   -m64 -DEXPERIMENTS -DNDEBUG -DSKIPMAXMINDEF -DBITMAP_RGK $(PSI_FLAGS)
+
+			#export CFLAGS  =  -O9   -m64 -DEXPERIMENTS -DNDEBUG -DSKIPMAXMINDEF -DSKIP_CHECK_PSI_WORKS_OK -D$(BITMAPTYPE) $(PSI_FLAGS)
+			#export CFLAGS  =  -O9   -m64 -DEXPERIMENTS -DNDEBUG -DSKIPMAXMINDEF                              -D$(BITMAPTYPE) $(PSI_FLAGS)
+
+
+			#export CFLAGS  =  -O0 -g -m64 -DEXPERIMENTS 
+			#export CFLAGS  =  -O0 -g  -m64 -DSHOW_RESULTS -DEXPERIMENTS
+			#export CFLAGS  =  -O0 -g -m64 -DEXPERIMENTS   
+			#export CFLAGS  =  -O9   -m64 
+
+
+
+
+
+#######################################################################
+#######################################################################
+#### Set the enviroment to build the i-CSA / W-CSA
+
+ ## choose sorting algorithm to build the suffix arrays (uncomment one line)
+ ## larson-sadakane alg.
+ #export SRCDIRISI   = intIndex_larson  (not used in RDFCSA)
+ ## qsort.
+ export SRCDIRISI  = intIndex_qsort
+
+ export NAMEINDEX   = wcsa_$(PSITYPE)
+ export LIBINDEX    = swcsa.a
+ export LIBINTINDEX = icsa.a
+
+
+SRCDIR = ./src
+SRCDIRUTILS = utils
+SRCDIRPIZZA = ./pizza
+
+
+SRCDIRLIBCDS = ./src/libcds
+##for including RRR in the vocabulary in BuildFacade.cpp
+LIBCDSOBJS = Array.o BitString.o BitSequence.o \
+	      BitSequenceDelta.o  BitSequenceBuilderDelta.o  \
+	      BitSequenceRRR.o  BitSequenceBuilderRRR.o TableOffsetRRR.o \
+	      BitSequenceSDArray.o BitSequenceBuilderSDArray.o sdarraySadakane.o \
+	      BitSequenceRUNSOZ.o BitSequenceBuilderRUNSOZ.o \
+          BitSequenceRUNSOZ_opt.o BitSequenceBuilderRUNSOZ_opt.o \
+	      BitSequenceRG.o BitSequenceBuilderRG.o \
+	      BitSequenceRGK.o BitSequenceBuilderRGK.o
+#######################################################################
+
+#all: clean  wsi  buildParser buildIntIndex buildStats buildFacade pizzaMake cleanO
+all: clean  buildSort buildParser buildIntIndex buildUncompressIntIndex buildUncompress \
+            buildAll buildAllDual buildStats buildTestPsi benchmark  benchmarkTest  cleanO  # testSnapshot cleanO
+
+wsi: intIndexPackage buildFacade.o parameters.o basics.o \
+        $(LIBCDSOBJS) \
+		bitmap.o huff.o fileInfo.o #icsa.o 
+	ar rc $(LIBINTINDEX) parameters.o buildFacade.o basics.o \
+        $(LIBCDSOBJS) \
+		bitmap.o huff.o fileInfo.o 
+	#ar q $(LIBINDEX) icsa.o psiHuffmanRLE.o psiDeltaCode.o psiGonzalo.o  ##they are included by icsa.a
+	mv $(LIBINTINDEX) $(LIBINDEX)
+	cp $(LIBINDEX) $(SRCDIRPIZZA)
+
+benchmark: wsi
+	 $(CC) $(CFLAGS) -o  benchmark$(NAMEINDEX)$(EXE_SUFFIXBITMAP) $(SRCDIR)/benchmark.cpp $(LIBINDEX)  -lrt
+
+benchmarkTest: wsi
+	 $(CC) $(CFLAGS) -o  benchmarkTest$(NAMEINDEX)$(EXE_SUFFIXBITMAP) $(SRCDIR)/benchmarkTest.cpp $(LIBINDEX)  -lrt
+
+
+	 
+testSnapshot:
+	 $(CC) $(CFLAGS) -o  testSnapshot$(NAMEINDEX)$(EXE_SUFFIXBITMAP) $(SRCDIR)/testSnapshot.cpp $(LIBINDEX)  -lrt
+	 
+buildParser:  wsi
+	$(CC)  $(CFLAGS) -o BUILDPARSER$(NAMEINDEX)$(EXE_SUFFIXBITMAP) $(SRCDIR)/buildParser.c $(LIBINDEX)	
+
+buildSort:  wsi
+	$(CC)  $(CFLAGS) -o BUILDSORT$(NAMEINDEX)$(EXE_SUFFIXBITMAP) $(SRCDIR)/buildSort.c $(LIBINDEX)	
+
+buildIntIndex:  wsi
+	$(CC)  $(CFLAGS) -o BUILDINTINDEX$(NAMEINDEX)$(EXE_SUFFIXBITMAP) $(SRCDIR)/buildIntIndex.c $(LIBINDEX)	
+
+buildStats:  wsi
+	$(CC)  $(CFLAGS) -o STATS$(NAMEINDEX)$(EXE_SUFFIXBITMAP) $(SRCDIR)/buildStats.c $(LIBINDEX)	
+
+buildTestPsi:  wsi
+	$(CC)  $(CFLAGS) -o TESTPSI$(NAMEINDEX)$(EXE_SUFFIXBITMAP) $(SRCDIR)/buildTestPsi.c $(LIBINDEX)	
+
+buildAll:  wsi
+	$(CC) -DFACADEWITHMAIN $(CFLAGS) -o BUILDALL$(NAMEINDEX)$(EXE_SUFFIXBITMAP) $(SRCDIR)/buildAll.c $(LIBINDEX)
+
+buildAllDual:  wsi
+	$(CC) -DFACADEWITHMAIN $(CFLAGS) -o BUILDALLDUAL$(NAMEINDEX)$(EXE_SUFFIXBITMAP) $(SRCDIR)/buildAllDual.c $(LIBINDEX)
+
+buildUncompressIntIndex:  wsi
+	$(CC) -DFACADEWITHMAIN $(CFLAGS) -o BUILDUNCOMPRESSINTINDEX$(NAMEINDEX)$(EXE_SUFFIXBITMAP) $(SRCDIR)/buildUncompressIntIndex.c $(LIBINDEX)
+
+buildUncompress:  wsi
+	$(CC) -DFACADEWITHMAIN $(CFLAGS) -o BUILDUNCOMPRESS$(NAMEINDEX)$(EXE_SUFFIXBITMAP) $(SRCDIR)/buildUncompress.c $(LIBINDEX)
+
+
+buildFacade.o: parameters.o basics.o bitmap.o \
+		 huff.o fileInfo.o  $(LIBINTINDEX)
+	 $(CC) $(CFLAGS) -c  $(SRCDIR)/buildFacade.cpp 
+
+
+
+
+###################################################
+##FROM LIBCDS   --> FOR bitSequences from libcds.
+###################################################
+
+Array.o:
+	$(CC) $(CFLAGS) -c $(SRCDIRLIBCDS)/Array.cpp
+
+BitString.o:
+	$(CC) $(CFLAGS) -c $(SRCDIRLIBCDS)/BitString.cpp
+
+BitSequence.o:
+	$(CC) $(CFLAGS) -c $(SRCDIRLIBCDS)/BitSequence.cpp
+
+BitSequenceDelta.o:
+	$(CC) $(CFLAGS) -c $(SRCDIRLIBCDS)/BitSequenceDelta.cpp
+
+BitSequenceRRR.o:
+	$(CC) $(CFLAGS) -c $(SRCDIRLIBCDS)/BitSequenceRRR.cpp
+
+BitSequenceRG.o:
+	$(CC) $(CFLAGS) -c $(SRCDIRLIBCDS)/BitSequenceRG.cpp
+
+BitSequenceRGK.o:
+	$(CC) $(CFLAGS) -c $(SRCDIRLIBCDS)/BitSequenceRGK.cpp
+
+BitSequenceSDArray.o:
+	$(CC) $(CFLAGS) -c $(SRCDIRLIBCDS)/BitSequenceSDArray.cpp
+
+BitSequenceRUNSOZ.o:
+	$(CC) $(CFLAGS) -c $(SRCDIRLIBCDS)/BitSequenceRUNSOZ.cpp
+
+BitSequenceRUNSOZ_opt.o:
+	$(CC) $(CFLAGS) -c $(SRCDIRLIBCDS)/BitSequenceRUNSOZ_opt.cpp
+
+
+BitSequenceBuilder.o:
+	$(CC) $(CFLAGS) -c $(SRCDIRLIBCDS)/BitSequenceBuilder.cpp
+
+BitSequenceBuilderDelta.o:
+	$(CC) $(CFLAGS) -c $(SRCDIRLIBCDS)/BitSequenceBuilderDelta.cpp
+
+BitSequenceBuilderRRR.o:
+	$(CC) $(CFLAGS) -c $(SRCDIRLIBCDS)/BitSequenceBuilderRRR.cpp
+
+BitSequenceBuilderRG.o:
+	$(CC) $(CFLAGS) -c $(SRCDIRLIBCDS)/BitSequenceBuilderRG.cpp
+
+BitSequenceBuilderRGK.o:
+	$(CC) $(CFLAGS) -c $(SRCDIRLIBCDS)/BitSequenceBuilderRGK.cpp
+
+BitSequenceBuilderSDArray.o:
+	$(CC) $(CFLAGS) -c $(SRCDIRLIBCDS)/BitSequenceBuilderSDArray.cpp
+
+BitSequenceBuilderRUNSOZ.o:
+	$(CC) $(CFLAGS) -c $(SRCDIRLIBCDS)/BitSequenceBuilderRUNSOZ.cpp
+
+BitSequenceBuilderRUNSOZ_opt.o:
+	$(CC) $(CFLAGS) -c $(SRCDIRLIBCDS)/BitSequenceBuilderRUNSOZ_opt.cpp
+
+TableOffsetRRR.o:
+	$(CC) $(CFLAGS) -c $(SRCDIRLIBCDS)/TableOffsetRRR.cpp
+
+sdarraySadakane.o:
+	$(CC) $(CFLAGS) -c $(SRCDIRLIBCDS)/sdarraySadakane.cpp
+
+###################################################
+
+
+
+
+#######################################################################
+#Compiles also search programs in pizza folder
+
+pizzaMake:
+	cd  $(SRCDIRPIZZA) && $(MAKE) -w
+	echo "[Compiling and linking ./pizza search-programs]"	
+
+################# SELF INDEX ON INTEGERS ##############################
+#Builds the int-self-index in dir $(SRCDIRISI) (ex: i-ssa, i-csa,... ) 
+
+intIndexPackage:
+	cd  $(SRCDIR)/$(SRCDIRISI) && $(MAKE) -w
+	@echo "[copying the int-index lib into current dir]"
+	@cp $(SRCDIR)/$(SRCDIRISI)/$(LIBINTINDEX) .
+
+####################### UTILS MODULES #################################
+
+parameters.o: 
+	$(CC) $(CFLAGS) -c $(SRCDIR)/$(SRCDIRUTILS)/parameters.c 
+
+fileInfo.o:  
+	$(CC) $(CFLAGS) -c $(SRCDIR)/$(SRCDIRUTILS)/fileInfo.c
+	
+
+huff.o: 
+	$(CC) $(CFLAGS) -c $(SRCDIR)/$(SRCDIRUTILS)/huff.c
+
+basics.o: 
+	$(CC) $(CFLAGS) -c $(SRCDIR)/$(SRCDIRUTILS)/basics.c
+
+bitmap.o: 
+	$(CC) $(CFLAGS) -c $(SRCDIR)/$(SRCDIRUTILS)/bitmap.c
+
+
+############################ CLEANING #################################
+
+cleanO: 
+	rm -f *.o
+	
+clean:
+	cd  $(SRCDIR)/$(SRCDIRISI) && $(MAKE) clean -w
+	rm -rf *~ *% *.o core *.bak $(LIBINTINDEX) $(LIBINDEX) $(SRCDIRPIZZA)/$(LIBINDEX) 
+	rm -f BUILDALL$(NAMEINDEX)$(EXE_SUFFIXBITMAP) BUILDINTINDEX$(NAMEINDEX)$(EXE_SUFFIXBITMAP) BUILDPARSER$(NAMEINDEX)
+	rm -f BUILDSORT$(NAMEINDEX)$(EXE_SUFFIXBITMAP) STATS$(NAMEINDEX)$(EXE_SUFFIXBITMAP) BUILDUNCOMPRESS$(NAMEINDEX)$(EXE_SUFFIXBITMAP) 
+	rm -f BUILDUNCOMPRESSINTINDEX$(NAMEINDEX)$(EXE_SUFFIXBITMAP) benchmark$(NAMEINDEX)$(EXE_SUFFIXBITMAP)  testSnapshot$(NAMEINDEX)$(EXE_SUFFIXBITMAP)
+	rm -f TESTPSI$(NAMEINDEX)$(EXE_SUFFIXBITMAP)
+	rm -f  BUILDPARSER$(NAMEINDEX)$(EXE_SUFFIXBITMAP) benchmarkTest$(NAMEINDEX)$(EXE_SUFFIXBITMAP)
+	
+	rm -f BUILDALLDUAL$(NAMEINDEX)$(EXE_SUFFIXBITMAP) 
+	#rm -rf BUILDALL$(NAMEINDEX) BUILDINTINDEX$(NAMEINDEX) BUILDPARSER$(NAMEINDEX) BUILDSORT$(NAMEINDEX) STATS$(NAMEINDEX) BUILDUNCOMPRESS$(NAMEINDEX) BUILDUNCOMPRESSINTINDEX$(NAMEINDEX) benchmark  testSnapshot
+
+
+############################ PACKAGING ###############################
+
+tar:
+	#datetex=RDFcsa[$(date +%F_%H_%M_%S)].tar.gz 
+	#tar czvf "$datetex"    pizza src Makefile* README  scripts.rdf/go* scripts.rdf/go*.sh scripts.rdf/build.sh scripts.rdf/compile.sh  compile* COPYRIGHT README
+	#tar czvf RDFcsa.tar.gz  pizza src Makefile* README  scripts.rdf/go* scripts.rdf/go*.sh scripts.rdf/build.sh scripts.rdf/compile.sh compile* COPYRIGHT README
+	tar czvf RDFcsa.tar.gz  pizza src Makefile* README  scripts.rdf* compile.sh cleanall.sh COPYRIGHT README
+
+## How to test
+## valgrind --leak-check=full --show-reachable=yes ./BUILDALL /sitio/textos/CR.TXT ./indexes/cr_index "sA=32;sAinv=32;sPsi=32; nsHuff=16;psiSF=4"
+
+#######################################################################
+
