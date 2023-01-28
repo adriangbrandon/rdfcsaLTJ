@@ -165,6 +165,7 @@ namespace rdfcsa {
             if (this != &o) {
                 m_ptr_triple_pattern = std::move(o.m_ptr_triple_pattern);
                 m_is_empty = o.m_is_empty;
+                m_iterator = o.m_iterator;
             }
             return *this;
         }
