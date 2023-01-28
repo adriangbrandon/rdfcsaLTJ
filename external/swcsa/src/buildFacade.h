@@ -116,6 +116,7 @@ using namespace cds_static;
 #define BUILD_FACADE_TYPES
 
 
+
 #define MAX_ENTRIES 10
 
 
@@ -133,7 +134,17 @@ using namespace cds_static;
 		uint *s;        // S[0 .. nEntries*n) (including dummy)
 		size_t ssize;   //number of integers in S
 
-		void *myicsa;   //the CSA built on S				
+		void *myicsa;   //the CSA built on S
+		
+		//used in dual_rdf index.
+		uint gapobjects;        //given an ID of object in the source data, we substract "gapsobjects" to 
+                                 //map into an ID in the range [1..no]
+                                 //or, the 1st object of the source data has the ID gapsopbjects+1.
+                                 //we need it only for "LEAP()" function.
+		
+		uint is_in_spo_order;     //1 for RDFCSA IN SPO ORDER  -default
+		                          //O for RDFCSA IN OPS ORDER  -BEWARE !! set externally after build and load. NOT SAVED TO DISK !!
+		                          //                                      i.e. within build_index_dual() and load_index_dual(); 
 	} twcsa;
 
 
@@ -150,6 +161,7 @@ typedef struct {
 	twcsa *ops;
 } tdualrdfcsa;
 
+
 #define DUAL_FILE_EXT "dualOPS"
 
 #include "interfaceDual.h"
@@ -162,8 +174,9 @@ typedef struct {
 // int free_index_dual (void *index);
 // int index_size_dual(void *index, ulong *size);
 // int get_length_dual(void *index, ulong *length);
+// int printInfo_dual(void *index);
 // 
-// int testRecoverAndCompareSPO_OPS(void *index);   //
+// int testRecoverAndCompareSPO_OPS_dump(void *index);   //
 // 
 // 
 // //titerator * createIterator(void *index);
@@ -211,12 +224,12 @@ int build_index (char *filename, char *build_options, void **index) ;
         /*  Saves index on disk by using single or multiple files, having 
           proper extensions. */
 
-int save_index (void *index, char *filename);
+int save_index (void *index, const char *filename);
 
         /*  Loads index from one or more file(s) named filename, possibly 
           adding the proper extensions. */
 
-int load_index (char *filename, void **index);
+int load_index (const char *filename, void **index);
 
         /* Frees the memory occupied by index. */
 
@@ -262,12 +275,12 @@ int printInfo(void *index);
 // Definitions of some PUBLIC function prototipes.
 
 		//loading/freeing the data structures into memory.	
-    void loadStructs(twcsa *wcsa, char *basename);	
-	twcsa *loadWCSA(char *filename);	
+    void loadStructs(twcsa *wcsa, const char *basename);	
+	twcsa *loadWCSA(const char *filename);	
 
 // Definitions of PRIVATE functions
 	//Auxiliary functions
-	int saveSEfile (char *basename, uint *v, ulong n);
+	int saveSEfile (const char *basename, uint *v, ulong n);
 	double getTime2 (void); 
 
 
@@ -314,6 +327,69 @@ uint get_num_nodes(void *gindex);
 
 uint mapID (twcsa *g, uint value, uint type);
 uint unmapID (twcsa *g, uint value, uint type);
+
+
+
+// dual @ 2023. 
+
+// for a given position "pos" within 0..3n-1, returns its type of component 
+// allows g to be either a twcsa in spo- or ops-order
+uint dual_typeFromPos(twcsa *g, size_t pos);
+
+// for a given position "pos" within 0..3n-1, returns its actual value 
+// allows g to be either a twcsa in spo- or ops-order
+uint dual_valueFromPos(twcsa *g, size_t pos);
+
+// prints and returns a triple, whose components include position pos (0 <= pos <3n)
+// allows g to be either a twcsa in spo- or ops-order
+uint *dual_printTriple(twcsa *g, size_t pos);
+
+
+
+//**************** FOR LEAP AND DOWN ****************************************************
+//Computes the 1st position i in [left,right] such that \Psi[i] \in in [tl,tr].
+//Returns: 
+//   0 if no i \in [left,right] maps into [tl,tr]
+//   Otherwise: 
+//		- Computes x=Psi[i]. 
+//		- Updates *left =i;
+//		- Returns dual_valueFromPos(g,x);
+//
+
+//NOTE :: left, right, tl and tr are defined as uint32 values, but could have been ulong
+
+uint dual_searchPsiTarget_to_leap(twcsa *g, ulong *left, ulong right, ulong tl, ulong tr);
+uint dual_searchPsiPsiTarget_to_leap(twcsa *g, ulong *left, ulong right, ulong tl, ulong tr) ;
+
+//Computes the positions i in [left,right] such that forall i, \Psi[i] \in in [tl,tr].
+//		- Updates *left  and *right is updated
+//		- Then updates *left = getPsiValue( *left), and *right = getPsiValue (*right).
+int dual_searchPsiTarget_to_down(twcsa *g, ulong *left, ulong *right, ulong tl, ulong tr);
+
+// returns [0,n-1] || [n,2n-1] || [2n, 3n-1], that corresponds to "type"
+// depending on the spo|ops order of g.
+//int dual_getRangeLR_uint32_for_type(twcsa *g, uint type, uint *left, uint *right);
+int dual_getRangeLR_for_type(twcsa *g, uint type, ulong *left, ulong *right);
+
+// returns the range [lp,rp] that corresponds to a value of type "type"
+// depending on the spo|ops order of g.
+//int dual_getRangeLR_uint32_for_type_and_value(twcsa *g, uint type, uint value,  uint *left, uint *right);
+int dual_getRangeLR_for_type_and_value(twcsa *g, uint type, uint value, ulong *left, ulong *right);
+
+
+// returns the range [lp,rp] that corresponds for values x of type "type", such that x>=value 
+// depending on the spo|ops order of g.
+int dual_getRangeLR_for_type_and_GEQvalue(twcsa *g, uint type, uint value, ulong *left, ulong *right);
+
+
+// checks if a given value of a given type is a valid value in the source alphabets
+// eg p in [1,npi] (npi=number of predicates in source dataset => npi = np -1;
+// eg s in [1,nsi] (nsi=number of subjects   in source dataset => nsi = ns -1;
+// eg o in [gapobjects,gapobjects+noi-1] 
+//                 (noi=number of objects    in source dataset => noi = no -1;
+int dual_isValidValue_for_Type_in_Input(twcsa *g, int type, uint value);
+
+
 
 
 

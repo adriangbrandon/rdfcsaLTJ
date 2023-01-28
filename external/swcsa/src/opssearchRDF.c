@@ -1,4 +1,6 @@
 
+//OLD-NO-LONGER-USED
+//REPLACED BY OPSSEARCHRDF_experiments.c
 
 int spo(void *gindex, int S, int P, int O, unsigned int **buffer) {
 	//	printf("\n @@@@@@@@@@@@@@@@ call to spo (%d,%d,%d)\n",S,P,O);fflush (stdout);
@@ -71,6 +73,7 @@ int spo(void *gindex, int S, int P, int O, unsigned int **buffer) {
 	}
 	return res[0];
 }
+
 /*************************************************************************/
 
 int sp (void *gindex, int S, int P, uint **buffer){ 

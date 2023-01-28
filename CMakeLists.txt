@@ -1,8 +1,9 @@
-cmake_minimum_required(VERSION 2.8.7)
+cmake_minimum_required(VERSION 2.8.13)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules")
 include(AppendCompilerFlags)
 project(rdfcsaLTJ)
 set(CMAKE_PROJECT_NAME "rdfcsaLTJ")
+
 
 #Change to "Debug" when you need it
 set(CMAKE_BUILD_TYPE "Release")

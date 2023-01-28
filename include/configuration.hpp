@@ -34,6 +34,7 @@ using namespace sdsl;
 using namespace std;
 
 typedef std::tuple<uint32_t, uint32_t, uint32_t> spo_triple;
+static string BUILD_OPTIONS = "sourceFormat=ADRIAN;sPsi=16; nsHuff=16;psiSF=4";
 //typedef sdsl::wm_int<bit_vector, rank_support_v<>, select_support_scan<>, select_support_scan<>> bwt_type;
 /*typedef sdsl::wm_int<bit_vector> bwt_type;
 

@@ -57,7 +57,7 @@
 	//uint edges;      //unused.
 
 	uint ns,np,no,nso;
-	uint gapobjects; //for adrian's type format: 0 for HDT format
+	uint gapobjects; //for adrian's type format;  0 for HDT format
 	
 	size_t n;    // number of triples in the input, that will be processed (+1 when dummy node is added)
 	uint *s;     // (S[0 .. nEntries*n)
@@ -87,16 +87,16 @@ char *error_index (int e);
           The returned index is ready to be queried. */
 
 //int build_index (struct graphDB *graph, char *build_options, void **index) ;
-int build_index (char *filename, char *build_options, void **index) ;
+int build_index (const char *filename, char *build_options, void **index) ;
 
         /*  Saves index on disk by using single or multiple files, having 
           proper extensions. */
-int save_index (void *index, char *filename);
+int save_index (void *index, const char *filename);
 	//@@void tgs_save(struct tgs *a, ofstream & f);
 
         /*  Loads index from one or more file(s) named filename, possibly 
           adding the proper extensions. */
-int load_index (char *filename, void **index);
+int load_index (const char *filename, void **index);
 	//@@void tgs_load(struct tgs *a, ifstream & f);
 
         /* Frees the memory occupied by index. */

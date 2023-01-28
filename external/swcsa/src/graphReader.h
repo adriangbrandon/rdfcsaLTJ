@@ -19,10 +19,10 @@
 
 
 /* @2023: loads source data and formats it into a graph structu, adding both a dummie triple and a terminator */
-int parseFileHDTformat_IntoGraph(char *infilebase, struct graphDB *graph);
+int parseFileHDTformat_IntoGraph(const char *infilebase, struct graphDB *graph);
 
-int parseFileADRIANformat_IntoGraph(char *infilebase, struct graphDB *graph);
-	int readNS_NO_NSO_gapobjects (char * filename, char *extension, uint *ns, uint *nso, uint *no, uint *gapobjects);
+int parseFileADRIANformat_IntoGraph(const char *infilebase, struct graphDB *graph);
+	int readNS_NO_NSO_gapobjects (const char * filename, char *extension, uint *ns, uint *nso, uint *no, uint *gapobjects);
 
 
 int gr_readHeader	(struct graphDB *graph, FILE *f);

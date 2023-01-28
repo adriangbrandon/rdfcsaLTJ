@@ -5,7 +5,7 @@
 
 /* @2023: loads the input data and adds both dummie node and sets gaps[nentries] to the value of the terminator  */
 
-int parseFileADRIANformat_IntoGraph(char *infilebase, struct graphDB *graph) {
+int parseFileADRIANformat_IntoGraph(const char *infilebase, struct graphDB *graph) {
 	//not yet defined ... parses Adrian's type graph DB and returns the proper struct graphDB 
 		
 	struct stat statbuf;
@@ -198,7 +198,7 @@ int parseFileADRIANformat_IntoGraph(char *infilebase, struct graphDB *graph) {
 
 
 
-int readNS_NO_NSO_gapobjects (char * filename, char *extension, uint *ns, uint *nso, uint *no, uint *gapobjects) {
+int readNS_NO_NSO_gapobjects (const char * filename, char *extension, uint *ns, uint *nso, uint *no, uint *gapobjects) {
 	char path[10000];
 	sprintf(path,"%s%s",filename,extension);
 	FILE *f = fopen(path, "r"); 
@@ -221,7 +221,7 @@ int readNS_NO_NSO_gapobjects (char * filename, char *extension, uint *ns, uint *
 
 
 //loads the input data and adds both dummie node and sets gaps[nentries] to the value of the terminator 
-int parseFileHDTformat_IntoGraph(char *infilebase, struct graphDB *graph) {
+int parseFileHDTformat_IntoGraph(const char *infilebase, struct graphDB *graph) {
 	// ---------- Set Graph properties and read input -----------------------
 	int error;
 	char infileHDR[4096], infileTRIPLES[4096];

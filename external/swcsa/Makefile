@@ -27,7 +27,7 @@ BITMAPTYPE= -DBITMAP_375
 GENFLAGS = -DEXPERIMENTS -DNDEBUG -DSKIPMAXMINDEF -DSKIP_CHECK_PSI_WORKS_OK
 
 
-export CFLAGS  =  -O3 -g   -m64 $(GENFLAGS) $(BITMAPTYPE) $(PSI_FLAGS)
+export CFLAGS  =  -O0 -g   -m64 $(GENFLAGS) $(BITMAPTYPE) $(PSI_FLAGS)
 
 
 
@@ -52,10 +52,11 @@ SRCDIR = ./src
 SRCDIRUTILS = utils
 
 
-all: clean  buildAll buildAllDual buildStats benchmark buildUncompress cleanO 
+all: clean  buildAll buildAllDual buildStats buildStatsDual benchmark benchmarkTestDual \
+            buildUncompress buildUncompressIntIndex cleanO 
 
 all-vello: clean  buildSort buildParser buildIntIndex buildUncompressIntIndex buildUncompress \
-            buildAll buildAllDual buildStats buildTestPsi benchmark  benchmarkTest  cleanO 
+            buildAll buildAllDual buildStats buildStatsDual buildTestPsi benchmark  benchmarkTest  cleanO 
 
 wsi: intIndexPackage buildFacade.o parameters.o basics.o \
 		bitmap.o huff.o fileInfo.o #icsa.o 
@@ -68,9 +69,16 @@ benchmark: wsi
 	 $(CC) $(CFLAGS) -o  benchmark$(NAMEINDEX) $(SRCDIR)/benchmark.cpp $(LIBINDEX) 
 #	 $(CC) $(CFLAGS) -o  benchmark$(NAMEINDEX) $(SRCDIR)/benchmark.cpp $(LIBINDEX)  -lrt
 
+benchmarkTestDual: wsi
+	 $(CC) $(CFLAGS) -o  benchmarkTestDual$(NAMEINDEX) $(SRCDIR)/benchmarkTestDual.cpp $(LIBINDEX) 
+
+
 
 buildStats:  wsi
 	$(CC)  $(CFLAGS) -o STATS$(NAMEINDEX) $(SRCDIR)/buildStats.c $(LIBINDEX)	
+
+buildStatsDual:  wsi
+	$(CC)  $(CFLAGS) -o STATSDUAL$(NAMEINDEX) $(SRCDIR)/buildStatsDual.c $(LIBINDEX)	
 
 
 buildAll:  wsi
@@ -86,6 +94,11 @@ buildUncompress:  wsi
 buildFacade.o: parameters.o basics.o bitmap.o \
 		 huff.o fileInfo.o  $(LIBINTINDEX)
 	 $(CC) $(CFLAGS) -c  $(SRCDIR)/buildFacade.cpp 
+
+
+buildUncompressIntIndex:  wsi
+	$(CC) -DFACADEWITHMAIN $(CFLAGS) -o BUILDUNCOMPRESSINTINDEX$(NAMEINDEX)$(EXE_SUFFIXBITMAP) $(SRCDIR)/buildUncompressIntIndex.c $(LIBINDEX)
+
 
 
 ################# SELF INDEX ON INTEGERS ##############################
@@ -125,8 +138,11 @@ clean:
 	rm -rf *~ *% *.o core *.bak $(LIBINTINDEX) $(LIBINDEX) 
 	rm -f BUILDALL$(NAMEINDEX) 
 	rm -f STATS$(NAMEINDEX) 
+	rm -f STATSDUAL$(NAMEINDEX) 
 	rm -f BUILDUNCOMPRESS$(NAMEINDEX) 
+	rm -f BUILDUNCOMPRESSINTINDEX$(NAMEINDEX) 
 	rm -f benchmark$(NAMEINDEX) 	
+	rm -f benchmarkTestDual$(NAMEINDEX) 	
 	rm -f BUILDALLDUAL$(NAMEINDEX) 
 
 

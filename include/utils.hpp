@@ -31,8 +31,9 @@ namespace rdfcsa {
     namespace util {
 
 
-        uint64_t get_size_interval(void* iter) {
-            return get_range_length_dual(iter);
+        template <class Iterator>
+        uint64_t get_size_interval(const Iterator &iter) {
+            return iter.interval_size();
         }
     }
 

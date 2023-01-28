@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define RING_RDFCSA_DUAL_HPP
 
 #include <interfaceDual.h>
+#include <configuration.hpp>
 
 namespace rdfcsa {
 
@@ -56,13 +57,13 @@ namespace rdfcsa {
         rdfcsa_dual() = default;
 
         rdfcsa_dual(const std::string &file_name){
-            char* build_options; //TODO de onde sacar esto
+            char* build_options = const_cast<char *>(BUILD_OPTIONS.c_str());
             build_index_dual(file_name.c_str(), build_options, &m_rdfcsa_index);
         }
 
         ~rdfcsa_dual(){
-            std::cout << "Freeing RdfCsa Dual" << std::endl; //TODO: para probar
-            free_index_dual(&m_rdfcsa_index); //TODO: creo que hai que cambiar o metodo para que sea void**
+            std::cout << "Freeing RdfCsa Dual" << std::endl;
+            free_index_dual(m_rdfcsa_index);
         }
 
         //! Copy constructor
@@ -96,12 +97,12 @@ namespace rdfcsa {
         }
 
         //! Serializes the data structure into the given file
-        void to_file(const char * file_name) const {
-            save_index_dual(m_rdfcsa_index, file_name);
+        void save(const std::string &file_name) const {
+            save_index_dual(m_rdfcsa_index, file_name.c_str());
         }
 
-        void from_file(const char * file_name){
-            load_index_dual(file_name, &m_rdfcsa_index);
+        void load(const std::string &file_name){
+            load_index_dual(file_name.c_str(), &m_rdfcsa_index);
         }
 
         size_type bytes(){

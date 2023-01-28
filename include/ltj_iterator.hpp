@@ -23,6 +23,7 @@
 #define VERBOSE 0
 
 #include <interfaceDual.h>
+#include <vector>
 
 namespace rdfcsa {
 
@@ -46,6 +47,7 @@ namespace rdfcsa {
         void copy(const ltj_iterator &o) {
             m_ptr_triple_pattern = o.m_ptr_triple_pattern;
             m_is_empty = o.m_is_empty;
+            m_iterator = cloneIterador_dual(m_iterator);
         }
 
         inline bool is_variable_subject(var_type var) {
@@ -171,6 +173,7 @@ namespace rdfcsa {
             // m_bp.swap(bp_support.m_bp); use set_vector to set the supported bit_vector
             std::swap(m_ptr_triple_pattern, o.m_ptr_triple_pattern);
             std::swap(m_is_empty, o.m_is_empty);
+            std::swap(m_iterator, o.m_iterator);
         }
 
         void down(var_type var, size_type c) { //Go down in the trie
@@ -186,7 +189,6 @@ namespace rdfcsa {
 
         void up(var_type var) { //Go up in the trie
             up_dual(m_iterator);
-
         };
 
         value_type leap(var_type var, size_type c = 1) {
@@ -200,22 +202,24 @@ namespace rdfcsa {
         };
 
 
-        bool in_last_level(){ //TODO: pedir a Fari
-            return is_last_level(m_iterator);
+        bool in_last_level(){
+            return is_last_level_dual(m_iterator);
         }
 
         //Solo funciona en último nivel, en otro caso habría que reajustar
 
-        std::vector<uint> seek_all(var_type var){//TODO: pedir a Fari
-            std::vector<uint> res;
+        std::vector<uint> seek_all(var_type var){
             if (is_variable_subject(var)){
-                 get_all(m_iterator, SUBJECT, res.data());
+                return get_all_dual(m_iterator, SUBJECT);
             }else if (is_variable_predicate(var)){
-                 get_all(m_iterator, PREDICATE, res.data());
+                return get_all_dual(m_iterator, PREDICATE);
             }else{
-                 get_all(m_iterator, OBJECT, res.data());
+                return get_all_dual(m_iterator, OBJECT);
             }
-            return res;
+        }
+
+        size_type interval_size() const{
+            return get_range_length_dual(m_iterator);
         }
     };
 

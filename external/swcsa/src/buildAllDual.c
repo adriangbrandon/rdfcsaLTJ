@@ -72,6 +72,7 @@ int main(int argc, char* argv[])
 	start = getTime();
 	
 testAdrian(3,4);
+
 	//reads source data and adds dummie triple and terminator.
 	//	parseFileHDTformat_IntoGraph(infilebase,&graph);
 
@@ -124,9 +125,14 @@ testAdrian(3,4);
 			fprintf(stderr, " building time: %.3f secs\n\n", end-start );	
 
 
-			{
+			{	// frees se array to avoid swapping in wiki-larger dataset (msi - 64gb ram)
+				tdualrdfcsa *dualrdf = (tdualrdfcsa *) index;
+				my_free_array (dualrdf->spo->s);  dualrdf->spo->s = NULL;
+				my_free_array (dualrdf->ops->s);  dualrdf->ops->s = NULL;
+								
+		
 				start = getTime();
-				testRecoverAndCompareSPO_OPS(index);	
+				testRecoverAndCompareSPO_OPS_dump(index);	
 				end = getTime2();	
 				fprintf(stderr, " comparison time: %.3f secs\n", end-start );	
 			}
@@ -138,7 +144,6 @@ testAdrian(3,4);
 	 		 
 	}
 	
-
 	free(params);
 	
 	//fprintf(stdout,"\n\n\t ## Building time (**parsing into integers + present_layer: %.3f secs", end-start );
@@ -146,9 +151,7 @@ testAdrian(3,4);
 	//fprintf(stdout,"\n\t ## Overall compression --> %.2f%% (%.2f bits per char).\n\n",
     // 			(100.0*index_len)/text_len, (index_len*8.0)/text_len);
 
-
 	exit(0);	
-	
 }
 
 

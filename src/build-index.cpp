@@ -42,7 +42,7 @@ void build_index(const std::string &dataset, const std::string &output){
     memory_monitor::stop();
     cout << "  Index built  " << A.bytes() << " bytes" << endl;
 
-    A.to_file(output.c_str());
+    A.save(output);
     cout << "Index saved" << endl;
     cout << duration_cast<seconds>(stop-start).count() << " seconds." << endl;
     cout << memory_monitor::peak() << " bytes." << endl;

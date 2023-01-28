@@ -30,14 +30,14 @@ namespace rdfcsa {
 
     namespace gao {
 
-        template<class var_t = uint8_t, class cons_t = uint64_t >
+        template<class index_t, class var_t = uint8_t, class cons_t = uint64_t >
         class gao_size {
 
         public:
             typedef var_t var_type;
             typedef cons_t cons_type;
             typedef uint64_t size_type;
-            typedef void* ring_type;
+            typedef index_t index_type;
             typedef struct {
                 var_type name;
                 size_type weight;
@@ -45,14 +45,14 @@ namespace rdfcsa {
                 std::unordered_set<var_type> related;
             } info_var_type;
 
-            typedef ltj_iterator<ring_type, var_type, cons_type> ltj_iter_type;
+            typedef ltj_iterator<index_type, var_type, cons_type> ltj_iter_type;
             typedef std::pair<size_type, var_type> pair_type;
             typedef std::priority_queue<pair_type, std::vector<pair_type>, greater<pair_type>> min_heap_type;
 
         private:
             const std::vector<triple_pattern>* m_ptr_triple_patterns;
             const std::vector<ltj_iter_type>* m_ptr_iterators;
-            ring_type* m_ptr_ring;
+            index_type* m_ptr_ring;
 
 
             void var_to_vector(const var_type var, const size_type size,
@@ -121,7 +121,7 @@ namespace rdfcsa {
 
             gao_size(const std::vector<triple_pattern>* triple_patterns,
                         const std::vector<ltj_iter_type>* iterators,
-                        ring_type* r,
+                     index_type* r,
                         std::vector<var_type> &gao){
                 m_ptr_triple_patterns = triple_patterns;
                 m_ptr_iterators = iterators;

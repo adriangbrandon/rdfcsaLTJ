@@ -30,14 +30,14 @@
 
 namespace rdfcsa {
 
-    template<class var_t = uint8_t, class cons_t = uint64_t>
+    template<class index_t, class var_t = uint8_t, class cons_t = uint64_t>
     class ltj_algorithm {
 
     public:
         typedef uint64_t value_type;
         typedef uint64_t size_type;
         typedef var_t var_type;
-        typedef rdfcsa_dual index_type;
+        typedef index_t index_type;
         typedef cons_t const_type;
         typedef ltj_iterator<index_type, var_type, const_type> ltj_iter_type;
         typedef std::unordered_map<var_type, std::vector<ltj_iter_type*>> var_to_iterators_type;

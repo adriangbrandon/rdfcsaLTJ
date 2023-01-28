@@ -359,7 +359,7 @@ int buildIntIndex (uint *aintVector, uint n, uint nEntries, char *build_options,
 //@NOLONGER-RGK2023    //@@fari2017. Modifications:
 //@NOLONGER-RGK2023    //@@fari2017. RG bitmaps now works (there was a bug when adapting from libcdsbasics to our libcdsbasics) 
 //@NOLONGER-RGK2023    //@@fari2017. RRR, RGK works as always.
-//@NOLONGER-RGK2023    //@@fari2017. SDARRAY. Included
+//@NOLONGER-RGK2023    //@@fari2017. SDARRAY. IncludedDselect1Predicates
 //@NOLONGER-RGK2023    //@@fari2017. DELTA. Uses sampling and deltaCodes do represent the bitmap.
 //@NOLONGER-RGK2023    //@@fari2017. ---
 //@NOLONGER-RGK2023    //@@fari2017. RUNSOZ: split the original bitString into two bitStrings O and Z (Gonzalos' book, page 86). 
@@ -420,17 +420,46 @@ int buildIntIndex (uint *aintVector, uint n, uint nEntries, char *build_options,
 	
 	/********* Tabulamos las posiciones de los 1s en el rango [(SuffixArraySize-1)/3, 2*(SuffixArraySize-1)/3 -1 ******/
 	// to solve select_1 over predicates with a single table-lookup
-	{   uint nEntries = myicsa->nEntries;
+	{ 
+/*		
+		uint nEntries = myicsa->nEntries;
 		uint n = (myicsa->suffixArraySize-1)/ nEntries -1; 
 		uint ns = rank_1(myicsa->bD,n-1); //-1;
 		uint np = rank_1(myicsa->bD,2*n-1)-rank_1(myicsa->bD,n) +1+1;  //the last +1 to know also the pos of the first object (needed during searches)
 		myicsa->rankfirstPredicate = ns;
 		myicsa->numPredicates = np;
-		myicsa->Dselect1Predicates = (uint *)malloc (sizeof(uint) * np);
+		//myicsa->Dselect1Predicates = (uint *)malloc (sizeof(uint) * np);
+		myicsa->Dselect1Predicates = (uint *)malloc (sizeof(uint) * (np+1));  //@2023 corrección fari (permitir select(i+1) - select(i) usando siempre tabla de predicados sin hacer IF extra).
 		uint i;
 		
-		for (i=0;i<np;i++) 
+*/			
+
+	//* INI CAMBIADO 2023, CREO QUE ESTABA MAL ANTES */
+		uint nEntries = myicsa->nEntries;
+		uint n = (myicsa->suffixArraySize-1)/ nEntries;
+		uint ns = rank_1(myicsa->bD,n-1); //-1;
+		uint np = rank_1(myicsa->bD,2*n-1)-rank_1(myicsa->bD,n-1) +1+1;  //the last +1 to know also the pos of the first object (needed during searches)
+		myicsa->rankfirstPredicate = ns;
+		myicsa->numPredicates = np;
+		//myicsa->Dselect1Predicates = (uint *)malloc (sizeof(uint) * np); 
+		myicsa->Dselect1Predicates = (uint *)malloc (sizeof(uint) * (np+1));   //@2023 corrección fari (permitir select(i+1) - select(i) usando siempre tabla de predicados sin hacer IF extra).
+		uint i;
+
+		printf("\n :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::\n");
+		printf("\n \t loading bitmap-table-predicates: info");
+		printf("\n \t suffixArraySize = %lu", (ulong)myicsa->suffixArraySize);
+		printf("\n \t n = %lu , (suffixArraySize-1)/3 = %lu", (ulong) n, (ulong)(myicsa->suffixArraySize-1)/3  );
+		printf("\n \t ns = %lu ",(ulong)ns);
+		printf("\n \t np = %lu ",(ulong)np);
+		printf("\n \t rankfirstPredicate = %lu ",(ulong)myicsa->rankfirstPredicate);
+		printf("\n :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::\n");	
+		
+		//for (i=0;i<np;i++) 
+		for (i=0;i<=np;i++)  //@2023 corrección fari (permitir select(i+1) - select(i) usando siempre tabla de predicados sin hacer IF extra).
 			myicsa->Dselect1Predicates[i] = bselect(myicsa->bD, ns+i);		
+
+	//* FIN CAMBIADO 2023, CREO QUE ESTABA MAL ANTES */
+			
 		/*	
 		cout << "PREDICATES-TABLE_D_ONES: n =" <<n << ", ns = " << ns << ",np= " << np <<endl;
 		cout << "PREDICATES-TABLE_D_ONES: firstPredicate = " << myicsa->rankfirstPredicate  << endl;
@@ -482,11 +511,11 @@ int sourceLenIntIndex(void *index, uint *numInts){
 	return 0; //no error;
 }
 
-int saveIntIndex(void *index, char *pathname) {
+int saveIntIndex(void *index, const char *pathname) {
 //void storeStructsCSA(ticsa *myicsa, char *basename) {
   
  	ticsa *myicsa = (ticsa *) index; 
- 	char *basename=pathname;
+ 	const char *basename=pathname;
 
 	char *filename;
 	int file;
@@ -648,7 +677,7 @@ int sizeIntIndex(void *index, size_t *numBytes) {
 //@NOLONGERRGK-2023	size +=myicsa->Dmap->getSize();
 //@NOLONGERRGK-2023#endif
 	
-	size +=myicsa->numPredicates *sizeof(uint);   //tabla Select en predicados (directo).
+	size += (myicsa->numPredicates+1) *sizeof(uint);   //tabla Select en predicados (directo).
 	
 //@@	size += sizeof(uint) * myicsa->samplesASize ;  // samples A
 //@@	size += sizeof(uint) * myicsa->samplesAInvSize ;  // samples A^{-1}
@@ -687,9 +716,9 @@ int sizeIntIndex(void *index, size_t *numBytes) {
 
 
 //ticsa *loadCSA(char *basename) {
-int loadIntIndex(char *pathname, void **index){
+int loadIntIndex(const char *pathname, void **index){
 
-	char *basename=pathname;
+	const char *basename=pathname;
 	char *filename;
 	int file;
 	uint length;
@@ -723,6 +752,7 @@ int loadIntIndex(char *pathname, void **index){
 	read_err=read(file, &(myicsa->nEntries), sizeof(uint));	
 	read_err=read(file, &suffixArraySize, sizeof(uint));		
 	myicsa->suffixArraySize = suffixArraySize;
+	fprintf(stderr,"... into loadIntIndex........\n");
 	fprintf(stderr,"Number of indexed elements (suffix array size) = %u\n", suffixArraySize);
 	
 	// LEEMOS OS DATOS DO FICHEIRO QUE ALMACENA PSI COMPRIMIDA	
@@ -793,17 +823,47 @@ int loadIntIndex(char *pathname, void **index){
 	
 	
 	/********* Tabulamos las posiciones de los 1s en el rango [(SuffixArraySize-1)/3, 2*(SuffixArraySize-1)/3 -1 ******/
-	{   uint nEntries = myicsa->nEntries;
+	{
+/*		uint nEntries = myicsa->nEntries;
 		uint n = (myicsa->suffixArraySize-1)/ nEntries -1;
 		uint ns = rank_1(myicsa->bD,n-1); //-1;
 		uint np = rank_1(myicsa->bD,2*n-1)-rank_1(myicsa->bD,n) +1+1;  //the last +1 to know also the pos of the first object (needed during searches)
 		myicsa->rankfirstPredicate = ns;
 		myicsa->numPredicates = np;
-		myicsa->Dselect1Predicates = (uint *)malloc (sizeof(uint) * np);
+		//myicsa->Dselect1Predicates = (uint *)malloc (sizeof(uint) * np); 
+		myicsa->Dselect1Predicates = (uint *)malloc (sizeof(uint) * (np+1));   //@2023 corrección fari (permitir select(i+1) - select(i) usando siempre tabla de predicados sin hacer IF extra).
 		uint i;
+	*/	
+
+
+	//* INI CAMBIADO 2023, CREO QUE ESTABA MAL ANTES */
+		uint nEntries = myicsa->nEntries;
+		uint n = (myicsa->suffixArraySize-1)/ nEntries;
+		uint ns = rank_1(myicsa->bD,n-1); //-1;
+		uint np = rank_1(myicsa->bD,2*n-1)-rank_1(myicsa->bD,n-1) +1+1;  //the last +1 to know also the pos of the first object (needed during searches)
+		myicsa->rankfirstPredicate = ns;
+		myicsa->numPredicates = np;
+		//myicsa->Dselect1Predicates = (uint *)malloc (sizeof(uint) * np); 
+		myicsa->Dselect1Predicates = (uint *)malloc (sizeof(uint) * (np+1));   //@2023 corrección fari (permitir select(i+1) - select(i) usando siempre tabla de predicados sin hacer IF extra).
+		uint i;
+
+		printf("\n :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::\n");
+		printf("\n \t loading bitmap-table-predicates: info");
+		printf("\n \t suffixArraySize = %lu", (ulong)myicsa->suffixArraySize);
+		printf("\n \t n = %lu , (suffixArraySize-1)/3 = %lu", (ulong) n, (ulong)(myicsa->suffixArraySize-1)/3  );
+		printf("\n \t ns = %lu ",(ulong)ns);
+		printf("\n \t np = %lu ",(ulong)np);
+		printf("\n \t rankfirstPredicate = %lu ",(ulong)myicsa->rankfirstPredicate);
+		printf("\n :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::\n");	
+	
 		
-		for (i=0;i<np;i++) 
+		//for (i=0;i<np;i++) 
+		for (i=0;i<=np;i++)  //@2023 corrección fari (permitir select(i+1) - select(i) usando siempre tabla de predicados sin hacer IF extra).
 			myicsa->Dselect1Predicates[i] = bselect(myicsa->bD, ns+i);		
+
+	//* FIN CAMBIADO 2023, CREO QUE ESTABA MAL ANTES */
+
+					
 		/*	
 		cout << "PREDICATES-TABLE_D_ONES: n =" <<n << ", ns = " << ns << ",np= " << np <<endl;
 		cout << "PREDICATES-TABLE_D_ONES: firstPredicate = " << myicsa->rankfirstPredicate  << endl;
@@ -981,8 +1041,8 @@ int freeIntIndex(void *index) {
 //@NOLONGERRGK-2023	//BITMAP_RGK
 //@NOLONGERRGK-2023	delete myicsa->Dmap;	
 				
-	total+= myicsa->numPredicates *sizeof(uint);
-	printf("\n\t[destroying Dselect1Predicates table ... Freed %zu bytes... RAM",myicsa->numPredicates *sizeof(uint));
+	total+= (myicsa->numPredicates+1) *sizeof(uint);
+	printf("\n\t[destroying Dselect1Predicates table ... Freed %zu bytes... RAM", (myicsa->numPredicates +1) *sizeof(uint));
 	free(	myicsa->Dselect1Predicates);
 
 				
@@ -1186,7 +1246,7 @@ int printInfoIntIndex(void *index, const char tab[]) {
 	printf("\n%s    -D (bitmap)  = %10zu bytes",tab, totalD);
 	printf("\n%s    -rank for D  = %10zu bytes",tab, totalBD);
 //@NOLONGERRGK-2023	printf("\n%s    +D+bitmapRGK = %10zu bytes",tab,myicsa->Dmap->getSize());
-	printf("\n%s    +Dselect1Predicates table = %10zu bytes",tab,myicsa->numPredicates *sizeof(uint));
+	printf("\n%s    +Dselect1Predicates table = %10zu bytes",tab, (myicsa->numPredicates+1) *sizeof(uint));
 	
 
 	
@@ -1960,6 +2020,54 @@ unsigned int countCSABin(ticsa *myicsa, uint *pattern, uint patternSize, uint *l
 
 
 
+
+
+/*******************************************************************************/
+
+//finds the range [left-right] in a zone of increasing values of psi[left-right], such 
+//that for any $i \in [left-right] $, psi(i) maps into [tl,tr] 
+//no improvements... binary searches access psi at any (sampled/no-sampled) positions.
+int binSearchPsiPsiTarget(void *index, ulong *left, ulong *right, ulong *numocc, ulong tl, ulong tr){	
+
+	ticsa *myicsa = (ticsa *) index;
+	register unsigned long l, r, p, psi_p;
+	l=*left; r=*right;
+	
+	// looks for left limit	
+	while(l < r) {
+		p = (l+r)/2; 
+		psi_p= getPsiicsa(myicsa, p);
+		psi_p= getPsiicsa(myicsa, psi_p);
+		if (psi_p >= tl) r = p;
+		else l = p+1;
+	}
+	// If there is no $i \in [*left, *right] such that psi(i)\in [tl,tr]$  we are done with no matches.
+	psi_p= getPsiicsa(myicsa, r);
+	psi_p= getPsiicsa(myicsa, psi_p);
+	if( (tl>psi_p) || (tr<psi_p)) {
+		*left = l; *right = r; *numocc = 0;
+		return 0;
+	}
+	// Left limit is saved.
+	*left = r;
+
+	// now finds right limit   (we know at least 1 match occurs if we arrived here).
+	l = r;     //start from previous position
+	r = *right;
+	
+	while(l < r) {
+		p = (l+r+1)/2;
+		psi_p= getPsiicsa(myicsa, p);
+		psi_p= getPsiicsa(myicsa, psi_p);
+		if (psi_p <= tr) l=p;
+		else r = p-1;	
+	}
+	
+	// Gardamos o limite dereito
+	*right = l;		
+	*numocc = r-l+1;
+	return 0;
+}
 
 
 

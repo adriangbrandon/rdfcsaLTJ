@@ -25,13 +25,13 @@
 int buildIntIndex (uint *aintVector, uint n, uint nEntries, char *build_options, void **index );
 		
 	//Saves the index to disk
-int saveIntIndex(void *index, char *pathname);
+int saveIntIndex(void *index, const char *pathname);
 
 	//Returns number of elements in the indexed sequence of integers
 int sourceLenIntIndex(void *index, uint *numInts);
 
 	//Loads the index from disk.
-int loadIntIndex(char *pathname, void **index);
+int loadIntIndex(const char *pathname, void **index);
 	
 	//Frees the memory allocated to the int_index
 int freeIntIndex(void *index);
@@ -48,6 +48,9 @@ int printInfoIntIndex(void *index, const char tab[]);
 //that for any $i \in [left-right] $, psi(i) maps into [tl,tr] 
 int binSearchPsiTarget(void *index, ulong *left, ulong *right, ulong *numocc, ulong tl, ulong tr);
 int binSearchPsiTarget_samplesFirst(void *index, ulong *left, ulong *right, ulong *numocc, ulong tl, ulong tr);
+
+int binSearchPsiPsiTarget(void *index, ulong *left, ulong *right, ulong *numocc, ulong tl, ulong tr);
+
 	// returns the rank_1 (D,i)	
 uint getRankicsa(void *index, uint i);
 	// returns the select_1 (D,i)	

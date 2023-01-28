@@ -748,3 +748,465 @@ int test_sp(void *gindex, uint **res, uint **res2) {
 	
 	return 0;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+///*************************************************************************************************/
+///*   DUAL - RDFCSA - 																			 */
+///*************************************************************************************************/
+
+// uses backward search, given 2 ranges obtained with select
+/* receives a rdfcsa in SPO order as 1st parameter */
+int dual_rdfcsaSPO_sp (void *gindex, int S,  int P, unsigned int **buffer) {
+
+	return sp_2(gindex, S,P,buffer);
+	
+}
+
+
+// uses backward search, given 2 ranges obtained with select
+/* receives a rdfcsa in OPS order as 1st parameter */
+int dual_rdfcsaOPS_ps (void *gindex, int P, int S, unsigned int **buffer) {
+
+	twcsa *g = (twcsa *)gindex;
+	
+	uint *res= *buffer; //no malloc performed here!!
+
+	//printf("\n @@@@@@@@@@@@@@@@ call to dual_rdfcsaOPS_sp (S,P)= (%d,\?,%d)\n",S,O);fflush (stdout);
+
+
+	uint ss = mapID(g,S,SUBJECT);
+	uint pp = mapID(g,P,PREDICATE);
+	
+	ulong numocc,l,r;
+
+	ulong ls,rs, numocc_s;
+	ulong lp,rp, numocc_p;
+
+	
+	#ifndef USE_SELECT
+		uint pattern[MAX_ENTRIES];
+		pattern[0] = ss;
+		countIntIndex(g->myicsa, pattern , 1, &numocc_s, &ls, &rs);
+
+		pattern[0] = pp;		
+		countIntIndex(g->myicsa, pattern , 1, &numocc_p, &lp, &rp);
+	#else
+		//ls= getSelecticsa(g->myicsa, ss+1);
+		//rs = getSelecticsa(g->myicsa, ss+2)-1;
+		//numocc_s = rs-ls+1;
+	
+		geticsa_select_j_y_j_mas_1 (g->myicsa, ss+1, &ls, &rs);	rs--;		
+		numocc_s = rs-ls+1;
+		
+	
+		lp= getSelectTablePredicates(g->myicsa,pp+1);
+		rp= getSelectTablePredicates(g->myicsa,pp+2)-1;
+		numocc_p = rp-lp+1;
+		
+
+		{	// PARA ELIMINAR TENER AQUÍ SÓLO PARA TESTEAR !!
+			ulong lp2,rp2, numocc_p2;
+
+				lp2 = getSelecticsa(g->myicsa, pp+1);
+				rp2 = getSelecticsa(g->myicsa, pp+2)-1; 
+				if ((lp2 != lp) || (rp2 !=rp)) {
+					printf("\n error en getSelectTablePredicates for P=%d",P);
+					printf("\n tabulated-select: [lp , rp ] = [%lu, %lu]",lp,rp);
+					printf("\n computed-Bselect: [lp2, rp2] = [%lu, %lu]",lp2,rp2);
+					exit(0);
+				}
+			//FIN PARA ELIMINAR TENER AQUI SÓLO PARA TESTEAR 
+		}		
+		
+		
+		//		printf("\n*****\n \t l,r = [%lu, %lu]",l,r);
+		//		printf("\n \t lp,rp = [%lu, %lu]",lp,rp);
+		//		printf("\n \t ls,rs = [%lu, %lu]",ls,rs);
+		//		printf("\n lenS= %lu, lenP=%lu, lenO=%lu",r-l+1, rp-lp+1,ro-lo+1);
+		
+	#endif
+	
+	res[0]=0;
+	
+	if (numocc_s && numocc_p) {	
+		uint *res_s = res+1;
+		uint *res_p = res+1+ (MAX_RESULTS)*1;
+		uint *res_o = res+1+ (MAX_RESULTS)*2;
+
+		l=lp;r=rp;
+
+		binSearchPsiTarget_samplesFirst(g->myicsa, &l,&r, &numocc, ls, rs);
+
+		if (!numocc) return res[0];
+	//	printf("\n BSearchS-P= ls,rs = [%lu, %lu]",l,r);
+
+		#ifdef BUFFER_PSI_ON
+			uint *bufferpsi = (uint*) my_malloc(sizeof(uint) * (r-l+1));
+			getPsiBuffericsa(g->myicsa,bufferpsi,l,r);
+		#endif		
+
+		ulong i;   //Ps that map into the Ss' interval
+		for (i=l; i<=r;i++) {
+			uint n,o,s; 
+			n = res[0];
+			res[0]++;
+
+			// predicates
+			res_p[n] = P;
+
+			// subjects
+			#ifdef BUFFER_PSI_ON
+				s=bufferpsi[i-l];
+			#else
+				s= getPsiicsa(g->myicsa, i);
+			#endif		
+			res_s[n] = S;
+
+			// objects
+			o= getPsiicsa(g->myicsa, s);
+			res_o[n] = getRankicsa(g->myicsa,o) -1;
+			res_o[n] = unmapID(g,res_o[n],OBJECT);
+	
+						
+		}
+		#ifdef BUFFER_PSI_ON
+				my_free_array(bufferpsi);
+		#endif		
+	}
+	
+	return res[0];
+}
+
+
+//Computes the range [left,right] where triple <S,P> is found.
+//Returns the size of the range (right-left+1), or 0 if <S,P> is not found.
+uint dual_rdfcsaSPO_init_sp (void *gindex, int S, int P,  uint *left, uint *right) {
+	
+	//printf("\n @@@@@@@@@@@@@@@@ call to dual_rdfcsaSPO_init_sp (%d,%d,!?)\n",S,P);fflush (stdout);
+
+	twcsa *g = (twcsa *)gindex;
+
+	uint ss = mapID(g,S,SUBJECT);
+	uint pp = mapID(g,P,PREDICATE);
+	
+	ulong numocc,l,r;
+
+	ulong ls,rs, numocc_s;
+	ulong lp,rp, numocc_p;
+	
+	#ifndef USE_SELECT
+		uint pattern[MAX_ENTRIES];
+		pattern[0] = ss;
+		countIntIndex(g->myicsa, pattern , 1, &numocc_s, &ls, &rs);
+
+		pattern[0] = pp;		
+		countIntIndex(g->myicsa, pattern , 1, &numocc_p, &lp, &rp);
+		
+	#else
+	
+		//ls= getSelecticsa(g->myicsa, ss+1);
+		//rs = getSelecticsa(g->myicsa, ss+2)-1;
+		//numocc_s = rs-ls+1;
+	
+		geticsa_select_j_y_j_mas_1 (g->myicsa, ss+1, &ls, &rs);	rs--;		
+		numocc_s = rs-ls+1;		
+
+		//lp= getSelecticsa(g->myicsa, pp+1);
+		//rp = getSelecticsa(g->myicsa, pp+2)-1; 
+		lp= getSelectTablePredicates(g->myicsa,pp+1);
+		rp= getSelectTablePredicates(g->myicsa,pp+2)-1;
+		
+		numocc_p = rp-lp+1;
+	#endif
+			
+	if (numocc_s && numocc_p) {	
+
+		l=ls;r=rs;
+		//binSearchPsiTarget(g->myicsa, &l,&r, &numocc, lp, rp);		
+		binSearchPsiTarget_samplesFirst(g->myicsa, &l,&r, &numocc, lp, rp);
+
+		if (!numocc) return 0;
+
+		*left = l;     //within subjects
+		*right= r;
+		return r-l+1;  /* number of matching triples */
+	}
+	
+	return 0;
+}
+
+
+
+
+/*************  TEST SP*****************************************************/
+//1st parameter is a pointer to a tdualrdfcsa
+//typedef struct {
+//	twcsa *spo;
+//	twcsa *ops;
+//} tdualrdfcsa;
+
+
+int dual_test_sp_ps(void *index, uint **res, uint **res2) {
+	printf("\n call to dual_test_sp_ps\n");
+
+double start ,end;
+
+	tdualrdfcsa *dualrdf = (tdualrdfcsa *) index;
+	twcsa *g = dualrdf->spo;
+	twcsa *g2 = dualrdf->ops;
+	
+
+	uint *buffer;
+	size_t size_buffer;
+	printf("\n dumping source data \n");fflush(stdout);
+		dumpSourceData(g, &buffer, &size_buffer);
+	printf("... %zu triplets recovered (%zu expected)\n",size_buffer / 3, g->n);fflush(stdout);
+
+	/*
+				{
+					size_t i,j,z=0;
+					z=0;
+					z+=g->nEntries;
+					for (i=1; i<g->n; i++){
+						printf("\n <");
+						for (j=0;j<g->nEntries;j++) {
+							fprintf(stdout,"%u ",buffer[z]);							
+							z++;
+						}		
+						printf(">");										
+					}					
+				}
+	*/
+	
+	uint *B = buffer;
+	uint *f = (uint *) malloc (sizeof(uint) * size_buffer);
+	
+	ulong z=0, i=0, n=size_buffer, j;
+
+	printf("\n now computing different triplets sp* and its number of occs \n");fflush(stdout);
+	while (i<n) {
+		j=i+3;
+		while ((j<n) && (B[i]==B[j]) && (B[i+1]==B[j+1]) ) {
+			j+=3;
+			
+			if (!(j%1000000)   ) printf("\n\t<s,p,o>= %u, %u, %u", B[j],B[i+1],B[i+2]);
+			
+		}
+		f[z/3]=(j-i)/3;
+		B[z] = B[i];
+		B[z+1] = B[i+1];
+		B[z+2] = B[i+2];
+		z+=3;
+		
+		i=j;
+	}
+
+	n= z/3;
+	printf("\n n=%lu, z=%lu, i=%lu, j= %lu\n", n,z,i,j);fflush(stdout);
+	
+	// now  B[0.. 3n-1] has the "n" different triplets.
+	//freq[0..n-1] has the "n" frequencies of such triplets.
+	printf("\n source triplets = %zu, different triplets <s,p,\?> = %lu\n",size_buffer/3,n);
+
+ 
+ 	/***************/	
+ 	{
+ 	srand(time(NULL));
+ start = getTime2();	
+ 
+ 
+	fflush(stdout);fflush(stderr);
+	//now perform sp queries.
+	printf("\n now performing <s,p,\?> queries over the existing triplets:\n");
+	int results, results1 ;	
+	long total_results=0;
+//	i= 415000810;
+//	for ( ; i< n ; i++) {
+
+	i=0;
+	printf("\n\t <%u,%u,*> skipped\n", B[i*3],B[i*3+1]); fflush(stdout);fflush(stderr);
+	//skips i=0;
+	for (i=1; i< n ; i++) {
+		//results = sp(gindex, B[i*3],B[i*3+1], res);
+		//results1 = sp_0(gindex, B[i*3],B[i*3+1], res2);
+ 		
+ 		results  = dual_rdfcsaSPO_sp(g , B[i*3],B[i*3+1], res);   
+ 		results1 = dual_rdfcsaOPS_ps(g2, B[i*3+1],B[i*3], res2);
+ 		
+ 		//SORT RESULTS1 in so order here not needed, both objects and subjects are sorted within those ranges!!
+ 	
+		if ((results != f[i]) || (results != results1)) { 
+			//printf("\n sp operation failed (i=%lu)\n", i);
+			printf("\n sp operation failed (i=%lu) - results = %u, results1 = %u\n", i, results, results1);
+			
+			printf("\n<s,p,\?>= <%u, %u, %u>", B[i*3],B[i*3+1],B[i*3+2]);
+			exit(0);
+		}
+		if (results > 0) {
+			uint *res_s = (*res)+1;
+			uint *res_p = (*res)+1+ (MAX_RESULTS)*1;
+			uint *res_o = (*res)+1+ (MAX_RESULTS)*2;		
+
+			uint *res2_s = (*res2)+1;
+			uint *res2_p = (*res2)+1+ (MAX_RESULTS)*1;
+			uint *res2_o = (*res2)+1+ (MAX_RESULTS)*2;		
+
+			//checks results are "expected"
+			int x;
+			for (x=0; x<results;x++)
+			if ( (res_s[x] != B[i*3])    ||  (res_p[x] != B[i*3+1])  ||
+				 (res_s[x] != res2_s[x]) ||  (res_p[x] != res2_p[x]) ||(res_o[x] != res2_o[x])
+			   ) {
+				printf("\n\n Retrieved triplet failed: <s,p,\?> = <%u,%u,\?> and should be  <%u,%u,\?>\n", 
+				res_s[x], res_p[x],  B[i*3],B[i*3+1] );fflush (stdout);
+
+				printf("\n\t actually retrieved triplet failed: <s,p,o> = <%u,%u,%u> and should be  <%u,%u,%u> \n", 
+				res_s[x], res_p[x],  res_o[x],res2_s[x], res2_p[x],  res2_o[x]  );fflush (stdout);
+
+				exit(0);
+			}				
+		}	
+		total_results +=results;
+		
+		if((i%(n/1000)==0)) fprintf(stderr, "\rProcessing %.1f%% (%.1f secs)", (float)i/n*100, getTime2()-start);;
+ 	}	
+ 	
+ 	fprintf(stderr, "\rProcessing %.1f%% (%.1f secs)", (float)i/n*100, getTime2()-start); fflush(stderr);
+	printf("\n TEST <sp\?> passed **ok** (total results = %lu) \n", total_results);
+ 
+ end = getTime2();	
+ 	printf("\n time: %.3f secs\n\n", end-start );
+ 	}
+ 	/***************/		
+ 
+
+	/***************/
+	{
+	srand(time(NULL));
+start = getTime2();	
+
+	fflush(stdout);fflush(stderr);
+	//now perform spo queries.
+	printf("\n now performing <s,p,\?> queries over rather unexisting triplets:\n");
+	int results, results1 ;	
+	long total_results=0;
+	
+		//skips i=0;
+	for (i=1; i< n ; i++) {
+		B[i*3]   += ((B[i*3]  > (g->gaps[0]+1)) ?  (rand01()*(-1)) : rand01() );
+		B[i*3+1] += ((B[i*3+1]> (g->gaps[1]+1)) ?  (rand01()*(-1)) : rand01() );
+		B[i*3+2] += ((B[i*3+2]> (g->gaps[2]+1)) ?  (rand01()*(-1)) : rand01() );
+		if (B[i*3+2] >= g->gaps[3]) B[i*3+2] = B[i*3+2] >= g->gaps[3] -1;
+
+		//results2 = sp_0(gindex, B[i*3],B[i*3+1], res2);
+		//results = sp(gindex, B[i*3],B[i*3+1], res);
+		
+ 		results  = dual_rdfcsaSPO_sp(g , B[i*3],B[i*3+1], res);   
+ 		results1 = dual_rdfcsaOPS_ps(g2, B[i*3+1],B[i*3], res2);
+ 		
+ 		//SORT RESULTS1 in so order here not needed, both objects and subjects are sorted within those ranges!!
+ 	
+		if (results != results1) { 
+			printf("\n sp operation failed (i=%lu) - results = %u, results1 = %u\n", i, results, results1);
+			printf("\n<s,p,\?>= <%u, %u, %u>", B[i*3],B[i*3+1],B[i*3+2]);
+			exit(0);
+		}
+		if (results > 0) {
+			uint *res_s = (*res)+1;
+			uint *res_p = (*res)+1+ (MAX_RESULTS)*1;
+			uint *res_o = (*res)+1+ (MAX_RESULTS)*2;		
+
+			uint *res2_s = (*res2)+1;
+			uint *res2_p = (*res2)+1+ (MAX_RESULTS)*1;
+			uint *res2_o = (*res2)+1+ (MAX_RESULTS)*2;		
+
+			//checks results are "expected"
+			int x;
+			for (x=0; x<results;x++)
+			if ( (res_s[x] != B[i*3])    ||  (res_p[x] != B[i*3+1])  ||
+				 (res_s[x] != res2_s[x]) ||  (res_p[x] != res2_p[x]) ||(res_o[x] != res2_o[x])
+			   ) {
+				printf("\n\n Retrieved triplet failed: <s,p,\?> = <%u,%u,\?> and should be  <%u,%u,\?>\n", 
+				res_s[x], res_p[x],  B[i*3],B[i*3+1] );fflush (stdout);
+
+				printf("\n\t actually retrieved triplet failed: <s,p,o> = <%u,%u,%u> and should be  <%u,%u,%u> \n", 
+				res_s[x], res_p[x],  res_o[x],res2_s[x], res2_p[x],  res2_o[x]  );fflush (stdout);
+
+				exit(0);
+			}				
+		}	
+		total_results +=results;
+		
+		if((i%(n/1000)==0)) fprintf(stderr, "\rProcessing %.1f%% (%.1f secs)", (float)i/n*100, getTime2()-start);;
+ 	}	
+ 	
+ 	fprintf(stderr, "\rProcessing %.1f%% (%.1f secs)", (float)i/n*100, getTime2()-start); fflush(stderr);
+	printf("\n TEST <sp\?> passed **ok** (total results = %lu) \n", total_results);
+ 
+ end = getTime2();	
+ 	printf("\n time: %.3f secs\n\n", end-start );
+ 	}
+ 	/***************/	
+
+	
+	return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+

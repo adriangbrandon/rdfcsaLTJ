@@ -19,11 +19,14 @@
 
 #include <iostream>
 #include <utility>
-#include "ring.hpp"
+#include <rdfcsa_dual.hpp>
 #include <chrono>
 #include <triple_pattern.hpp>
 #include <ltj_algorithm.hpp>
 #include "utils.hpp"
+#include <fstream>
+#include <sstream>
+#include <sdsl/io.hpp>
 
 using namespace std;
 
@@ -102,10 +105,10 @@ uint64_t get_constant(string &s){
     return std::stoull(s);
 }
 
-ring::triple_pattern get_triple(string & s, std::unordered_map<std::string, uint8_t> &hash_table_vars) {
+rdfcsa::triple_pattern get_triple(string & s, std::unordered_map<std::string, uint8_t> &hash_table_vars) {
     vector<string> terms = tokenizer(s, ' ');
 
-    ring::triple_pattern triple;
+    rdfcsa::triple_pattern triple;
     if(is_variable(terms[0])){
         triple.var_s(get_variable(terms[0], hash_table_vars));
     }else{
@@ -130,17 +133,18 @@ std::string get_type(const std::string &file){
 }
 
 
-template<class ring_type>
+template<class index_type>
 void query(const std::string &file, const std::string &queries){
     vector<string> dummy_queries;
     bool result = get_file_content(queries, dummy_queries);
 
-    ring_type graph;
+    index_type graph;
 
     cout << " Loading the index..."; fflush(stdout);
-    sdsl::load_from_file(graph, file);
 
-    cout << endl << " Index loaded " << sdsl::size_in_bytes(graph) << " bytes" << endl;
+    graph.load(file);
+
+    cout << endl << " Index loaded " << graph.bytes() << " bytes" << endl;
 
     std::ifstream ifs;
     uint64_t nQ = 0;
@@ -158,7 +162,7 @@ void query(const std::string &file, const std::string &queries){
             //vector<Term*> terms_created;
             //vector<Triple*> query;
             std::unordered_map<std::string, uint8_t> hash_table_vars;
-            std::vector<ring::triple_pattern> query;
+            std::vector<rdfcsa::triple_pattern> query;
             vector<string> tokens_query = tokenizer(query_string, '.');
             for (string& token : tokens_query) {
                 auto triple_pattern = get_triple(token, hash_table_vars);
@@ -172,9 +176,9 @@ void query(const std::string &file, const std::string &queries){
 
             start = high_resolution_clock::now();
 
-            ring::ltj_algorithm<ring_type> ltj(&query, &graph);
+            rdfcsa::ltj_algorithm<index_type> ltj(&query, &graph);
 
-            typedef std::vector<typename ring::ltj_algorithm<>::tuple_type> results_type;
+            typedef std::vector<typename rdfcsa::ltj_algorithm<index_type>::tuple_type> results_type;
             results_type res;
 
             std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
@@ -212,7 +216,7 @@ void query(const std::string &file, const std::string &queries){
 int main(int argc, char* argv[])
 {
 
-    typedef ring::ring<> ring_type;
+    typedef rdfcsa::rdfcsa_dual index_type;
     //typedef ring::c_ring ring_type;
     if(argc != 3){
         std::cout << "Usage: " << argv[0] << " <index> <queries>" << std::endl;
@@ -221,17 +225,7 @@ int main(int argc, char* argv[])
 
     std::string index = argv[1];
     std::string queries = argv[2];
-    std::string type = get_type(index);
-
-    if(type == "ring"){
-        query<ring::ring<>>(index, queries);
-    }else if (type == "c-ring"){
-        query<ring::c_ring>(index, queries);
-    }else if (type == "ring-sel"){
-        query<ring::ring_sel>(index, queries);
-    }else{
-        std::cout << "Type of index: " << type << " is not supported." << std::endl;
-    }
+    query<index_type>(index, queries);
 
 
 
