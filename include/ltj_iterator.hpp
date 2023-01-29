@@ -20,7 +20,7 @@
 #ifndef RING_LTJ_ITERATOR_HPP
 #define RING_LTJ_ITERATOR_HPP
 
-#define VERBOSE 0
+#define VERBOSE 1
 
 #include <interfaceDual.h>
 #include <vector>

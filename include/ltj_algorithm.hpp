@@ -22,6 +22,7 @@
 #ifndef RING_LTJ_ALGORITHM_HPP
 #define RING_LTJ_ALGORITHM_HPP
 
+#define VERBOSE 1
 
 #include <triple_pattern.hpp>
 #include <ltj_iterator.hpp>
@@ -197,25 +198,40 @@ namespace rdfcsa {
                 std::vector<ltj_iter_type*>& itrs = m_var_to_iterators[x_j];
                 bool ok;
                 if(itrs.size() == 1 && itrs[0]->in_last_level()) {//Lonely variables
+
                     auto results = itrs[0]->seek_all(x_j);
+#if VERBOSE
+                    std::cout << "Seek (all): (" << (uint64_t) x_j << ": " << results.size() << ")" <<std::endl;
+#endif
                     //std::cout << "Results: " << results.size() << std::endl;
                     for (const auto &c : results) {
                         //1. Adding result to tuple
                         tuple[j] = {x_j, c};
                         //2. Going down in the trie by setting x_j = c (\mu(t_i) in paper)
+#if VERBOSE
+                        std::cout << "down(x_j=" << (uint64_t) x_j << " c=" << c << ")" << std::endl;
+#endif
                         itrs[0]->down(x_j, c);
                         //2. Search with the next variable x_{j+1}
                         ok = search(j + 1, tuple, res, start, limit_results, timeout_seconds);
                         if(!ok) return false;
+#if VERBOSE
+                        std::cout << "up(x_j=" << (uint64_t) x_j  << ")" << std::endl;
+#endif
                         //4. Going up in the trie by removing x_j = c
                         itrs[0]->up(x_j);
                     }
                 }else {
                     value_type c = seek(x_j);
-                    //std::cout << "Seek (init): (" << (uint64_t) x_j << ": " << c << ")" <<std::endl;
+#if VERBOSE
+                    std::cout << "Seek (init): (" << (uint64_t) x_j << ": " << c << ")" <<std::endl;
+#endif
                     while (c != 0) { //If empty c=0
                         //1. Adding result to tuple
                         tuple[j] = {x_j, c};
+#if VERBOSE
+                        std::cout << "down(x_j=" << (uint64_t) x_j << " c=" << c << ")" << std::endl;
+#endif
                         //2. Going down in the tries by setting x_j = c (\mu(t_i) in paper)
                         for (ltj_iter_type* iter : itrs) {
                             iter->down(x_j, c);
@@ -224,6 +240,9 @@ namespace rdfcsa {
                         ok = search(j + 1, tuple, res, start, limit_results, timeout_seconds);
                         if(!ok) return false;
                         //4. Going up in the tries by removing x_j = c
+#if VERBOSE
+                        std::cout << "up(x_j=" << (uint64_t) x_j  << ")" << std::endl;
+#endif
                         for (ltj_iter_type *iter : itrs) {
                             iter->up(x_j);
                         }
