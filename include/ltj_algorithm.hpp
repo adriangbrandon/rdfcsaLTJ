@@ -269,11 +269,15 @@ namespace rdfcsa {
             value_type c_i, c_prev = 0, i = 0, n_ok = 0;
             while (true){
                 //Compute leap for each triple that contains x_j
+
                 if(c == -1){
                     c_i = itrs[i]->leap(x_j);
                 }else{
                     c_i = itrs[i]->leap(x_j, c);
                 }
+#if VERBOSE
+                std::cout << "itrs[" << i << "].leap(x_j=" << (uint64_t) x_j << " c=" << c << ") = " << c_i << std::endl;
+#endif
                 if(c_i == 0) return 0; //Empty intersection
                 n_ok = (c_i == c_prev) ? n_ok + 1 : 1;
                 if(n_ok == itrs.size()) return c_i;
