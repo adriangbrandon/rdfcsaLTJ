@@ -22,7 +22,7 @@
 #ifndef RING_LTJ_ALGORITHM_HPP
 #define RING_LTJ_ALGORITHM_HPP
 
-#define VERBOSE 1
+#define VERBOSE 0
 
 #include <triple_pattern.hpp>
 #include <ltj_iterator.hpp>

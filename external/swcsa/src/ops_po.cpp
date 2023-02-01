@@ -632,8 +632,6 @@ uint dual_rdfcsaSPO_init_po (void *gindex, int P, int O, uint *left, uint *right
 		
 		lp= getSelectTablePredicates(g->myicsa,pp+1);
 		rp= getSelectTablePredicates(g->myicsa,pp+2)-1;
-
-		
 		numocc_p = rp-lp+1;
 		//printf("\n ll=%lu and l=%lu :: rr=%lu and r=%lu",ll,l,rr,r);
 

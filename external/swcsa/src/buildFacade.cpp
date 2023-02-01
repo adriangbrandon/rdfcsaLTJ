@@ -130,6 +130,7 @@ void printIterator_dual(void * iterator) {
 			}
 			printf("\n\t\t@ ---- END PRINTING TRIPLES around ranges[i]-----\n");
 		}	
+
 }
 
 
@@ -493,6 +494,7 @@ uint leap_dual(void *iterator, int type, uint value) {
 	 * 			                SPO ou OPS (indistinto): sujetos [1,ns], objetos [gapobjects, gapobjects+no-1] ?
 	 **/ 
 
+	if ((type ==OBJECT) && (value <= dualrdf->spo->gapobjects)) value = 1+dualrdf->spo->gapobjects;
 	if (! dual_isValidValue_for_Type_in_Input(dualrdf->spo,type,value)) return 0;
 	
 	/****/
@@ -563,11 +565,18 @@ uint leap_dual(void *iterator, int type, uint value) {
 		//dual_getRangeLR_for_type_and_value (g, type, value, &tl, &tr);  //target range for value - using conceptually 2 bitmap-selects
 		
 		dual_getRangeLR_for_type_and_GEQvalue (g, type, value, &tl, &tr);  //target range for value - using conceptually 2 
+		
+		//setColorMorado(); printf("\n target-left = %lu, target-right = %lu ",tl,tr); setColorNormal();
 
 
 		//2. recovers the x=leap() value, and x>0 it also shortens the source interval (increases the left of the range)
 					ulong longleft = *left;  		//TRICK-ini : copies *left (32bit value) to a ulong (64bit) variable "longleft"
+<<<<<<< HEAD
 		retval = dual_searchPsiTarget_to_leap (dualrdf->spo, &longleft, (ulong) right, tl,tr);  
+=======
+/** 	retval = dual_searchPsiTarget_to_leap (dualrdf->spo, &longleft, (ulong) right, tl,tr);  */
+		retval = dual_searchPsiTarget_to_leap ( g,           &longleft, (ulong) right, tl,tr);  
+>>>>>>> 5af18d1ce0456ea71be7973990110962d4669f5f
 					//*left = longleft;	     		//TRICK-ends: restores posibly modified *left from the ulong variable "longleft"
 				
 		//recall that if retval>0 then "left" = (range[0] ir range [2]) was also updated (actually increased)..	
@@ -627,8 +636,10 @@ uint leap_dual(void *iterator, int type, uint value) {
 
 			//2. recovers the x=leap() value, and x>0 it also shortens the source interval (increases the left of the range)
 						ulong longleft = *left;  		//TRICK-ini : copies *left (32bit value) to a ulong (64bit) variable "longleft"
-			retval = dual_searchPsiPsiTarget_to_leap (dualrdf->spo, &longleft, (ulong) right, tl,tr);  
-						//*left = longleft;	     		//TRICK-ends: restores posibly modified *left from the ulong variable "longleft"
+	   /** retval = dual_searchPsiPsiTarget_to_leap (dualrdf->spo, &longleft, (ulong) right, tl,tr);  **/
+		   retval = dual_searchPsiPsiTarget_to_leap ( g,           &longleft, (ulong) right, tl,tr);  
+			
+					//	*left = longleft;	     		//TRICK-ends: restores posibly modified *left from the ulong variable "longleft"
 					
 			//recall that if retval>0 then "left" = (range[0] ir range [2]) was also updated (actually increased)..	
 			
@@ -741,7 +752,8 @@ int down_dual(void *iterator, int type, uint value){       //numfijadas ++ e act
 			//2. now we shorten the source interval 
 					ulong longleft = *left;  		//TRICK-ini : copies *left  (32bit value) to a ulong (64bit) variable "longleft"
 					ulong longright = *right;  		//TRICK-ini : copies *right (32bit value) to a ulong (64bit) variable "longright"
-		retval = dual_searchPsiTarget_to_down (dualrdf->spo, &longleft, &longright, tl,tr);  
+		/** retval = dual_searchPsiTarget_to_down (dualrdf->spo, &longleft, &longright, tl,tr);  */
+		retval = dual_searchPsiTarget_to_down (g, &longleft, &longright, tl,tr);  
 					*left  = longleft;	     		//TRICK-ends: restores ??modified?? *left from the ulong variable "longleft"
 					*right = longright;	     		//TRICK-ends: restores modified *right from the ulong variable "longright"
 				
@@ -799,6 +811,7 @@ int up_dual(void *iterator) {                           //numfijadas -- e actual
 	if (it->nFixed ==2) {
 		memcpy(it->range, it->range_backup, 4*sizeof(uint)); 
 	}	
+	
 	it->nFixed--;
 	return 0;
 }
@@ -821,13 +834,14 @@ uint get_range_length_dual (void *iterator) {
 	size_t n = dualrdf->spo->n;          //numberofTriples	
 
 	if (it->nFixed ==0) {
-		return n;
+		return 3*n;
 	}
 	else if (it->nFixed ==1) {
-		return (it->range[1]- it->range[0] +1);   //equals to -->	ulong len_ops = it->range[1]- it->range[0] +1;		
+		return (it->range[1]- it->range[0] +1);   //equals to -->	ulong len_ops = it->range[3]- it->range[2] +1;		
 	}
 	else if (it->nFixed ==2) {
-		ulong len1 = it->range[1]- it->range[0] +1;   ulong len2 = it->range[3]- it->range[2] +1;
+		ulong len1 = it->range[1]- it->range[0] +1;   
+		ulong len2 = it->range[3]- it->range[2] +1;
 		ulong min_len=  (len1<len2) ? len1 : len2;
 		return min_len;
 	}	
@@ -838,7 +852,7 @@ uint get_range_length_dual (void *iterator) {
 
 // para un iterador.
 int is_last_level_dual(void *iterator) {
-	//returns 1 se hai >2 variables fixadas   numFijadas >=2
+	//returns 1 se hai >=2 variables fixadas   numFijadas >=2
 	//returns 0 otherwise (se hai 0 o 1 variables fixadas)
 
 	t_iterator *it = (t_iterator *) iterator;
@@ -920,6 +934,7 @@ std::vector <uint> get_all_dual (void *iterator, int type) {
 		uint pos; uint value;
 		for (i=left; i<=right; i++) {
 			pos=bufferpsi[i-left];
+			pos = getPsiicsa(g->myicsa,pos);         //** now l,r is 2 ranges before than expectedtype --> pos = \psi(\psi(i-left))
 			value = getRankicsa(g->myicsa,pos) -1;
 			value = unmapID(g, value, type);
 			
@@ -927,7 +942,12 @@ std::vector <uint> get_all_dual (void *iterator, int type) {
 		}
 		free(bufferpsi);
 	}
-	
+
+//  Adrian said we cannot call this function when nFixed =3 
+//	if (it->nFixed ==3) {
+//		return it->valueFixed[2];
+//	}
+//	
 	return res;	  
 	//Adrian, entendo que res é un vector valeiro, e ti miras o seu tamaño (por se pasas un nFixed !=2, e eu devolvo
 	//        un vector sen facer ningún push_back();
@@ -2229,8 +2249,9 @@ uint dual_searchPsiTarget_to_leap(twcsa *g, ulong *left, ulong right, ulong tl, 
 		*left = l; //updates only *left   (right is not modified) 
 		ulong x = getPsiicsa(g->myicsa,l);
 		uint ret = dual_valueFromPos(g,x); //the value at *left :D 
-										   // could also be returned by a modified 
+										   // could also be returned by a creating a modified 
 										   // binSearchPsiTarget_samplesFirst - variant. TO-DO
+										   // that also computes it (so we avoid the call to getPsiicsa() above)
 		return ret;
 	}
 	return 0;	
@@ -2248,7 +2269,7 @@ uint dual_searchPsiPsiTarget_to_leap(twcsa *g, ulong *left, ulong right, ulong t
 		      x = getPsiicsa(g->myicsa,x);
 		uint ret = dual_valueFromPos(g,x); //the value at *left :D 
 										   // could also be returned by a modified 
-										   // binSearchPsiTarget_samplesFirst - variant. TO-DO
+										   // binSearchPsiPsiTarget  ??
 		return ret;
 	}
 	return 0;	
@@ -2259,7 +2280,7 @@ uint dual_searchPsiPsiTarget_to_leap(twcsa *g, ulong *left, ulong right, ulong t
 //*********************************************************************************
 //Computes the positions i in [left,right] such that forall i, \Psi[i] \in in [tl,rt].
 //		- Updates *left  and *right is updated
-//		- Then updates *left = getPsiValue( *left), and *right = getPsiValue (*right).
+//		- Then updates *left = getPsiValue( *left), and *right = getPsiValue (*right).  <-- no
 int dual_searchPsiTarget_to_down(twcsa *g, ulong *left, ulong *right, ulong tl, ulong tr) {
 	ulong l=*left;
 	ulong numocc;
@@ -2267,9 +2288,9 @@ int dual_searchPsiTarget_to_down(twcsa *g, ulong *left, ulong *right, ulong tl, 
 	binSearchPsiTarget_samplesFirst(g->myicsa,left,right,&numocc,tl,tr);
 //	printf("\n left = %lu, right = %lu",*left, *right);
 	
-	if (*left != l) {
-		printf("\n buildFacade.c dual_searchPsiTarget_to_down():: LEFT HA CAMBIADO Y NO DEBERIA: (viejo) %lu != %lu (nuevo)\n",l, *left);
-	}
+	//if (*left != l) {
+	//	printf("\n buildFacade.c dual_searchPsiTarget_to_down():: LEFT HA CAMBIADO Y NO DEBERIA: (viejo) %lu != %lu (nuevo)\n",l, *left);
+	//}
 	
 //	*left  = getPsiicsa(g->myicsa, *left);
 //	*right = getPsiicsa(g->myicsa,*right);
@@ -2427,7 +2448,7 @@ void setColorMorado(){
 	printf("\033[0;35m");
 }
 void setColorVerde(){
-	printf("\033[0;32m");
+	printf("\033[1;32m");
 }
 void setColorAmarillo(){
 	printf("\033[1;33m");

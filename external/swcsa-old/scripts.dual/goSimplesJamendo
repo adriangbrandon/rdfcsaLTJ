@@ -1,0 +1,41 @@
+#!/bin/bash
+#Usage: ../benchmark <graphIdx> <queryFile> <tipoQuery> <iters> [<numQueries> [<numPred> <numSO> ]]
+
+ln -s ../benchmarkwcsa_PSI_R3H_GAPS  benchmark
+#ln -s ../benchmarkwcsa_PSI_R3HYBRID_GAPS
+
+
+
+
+
+rm ???.dat
+echo '----- SPO ------------------------------'
+./benchmark indexes/jamendo jamendo.queries/spo.txt 1 1 #499
+
+echo '----- SP* ------------------------------'
+./benchmark indexes/jamendo jamendo.queries/spV.txt 2 1 #500
+
+echo '----- *PO ------------------------------'
+./benchmark indexes/jamendo jamendo.queries/Vpo.txt 3 1 #467 
+                                                   
+echo '----- S*O ------------------------------'    
+./benchmark indexes/jamendo jamendo.queries/sVo.txt 4 1 #500 
+                                                   
+echo '----- S** ------------------------------'    
+./benchmark indexes/jamendo jamendo.queries/sVV.txt 5 1 #500 
+                                                   
+echo '----- *P* ------------------------------'    
+./benchmark indexes/jamendo jamendo.queries/VpV.txt 6 1 # 27 
+                                                   
+echo '----- **O ------------------------------'    
+./benchmark indexes/jamendo jamendo.queries/VVo.txt 7 1 #500 
+
+
+
+mv spo.dat  jamendo.spo.dat
+mv spV.dat  jamendo.spV.dat
+mv sVo.dat  jamendo.sVo.dat
+mv sVV.dat  jamendo.sVV.dat
+mv Vpo.dat  jamendo.Vpo.dat
+mv VpV.dat  jamendo.VpV.dat
+mv VVo.dat  jamendo.VVo.dat
