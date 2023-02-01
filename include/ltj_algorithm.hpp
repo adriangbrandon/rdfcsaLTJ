@@ -26,7 +26,7 @@
 
 #include <triple_pattern.hpp>
 #include <ltj_iterator.hpp>
-#include <gao.hpp>
+#include <gao_adaptive.hpp>
 #include <rdfcsa_dual.hpp>
 
 namespace rdfcsa {
@@ -44,10 +44,11 @@ namespace rdfcsa {
         typedef std::unordered_map<var_type, std::vector<ltj_iter_type*>> var_to_iterators_type;
         typedef std::vector<std::pair<var_type, value_type>> tuple_type;
         typedef std::chrono::high_resolution_clock::time_point time_point_type;
+        typedef gao::gao_adaptive<index_type, var_type, const_type> gao_type;
 
     private:
         const std::vector<triple_pattern>* m_ptr_triple_patterns;
-        std::vector<var_type> m_gao; //TODO: should be a class
+        gao_type m_gao;
         index_type* m_ptr_index;
         std::vector<ltj_iter_type> m_iterators;
         var_to_iterators_type m_var_to_iterators;
@@ -107,7 +108,7 @@ namespace rdfcsa {
                 ++i;
             }
 
-            gao::gao_size<index_type> gao_sv2(m_ptr_triple_patterns, &m_iterators, m_ptr_index, m_gao);
+            m_gao = gao_type(m_ptr_triple_patterns, &m_iterators, &m_var_to_iterators, m_ptr_index);
 
         }
 
@@ -194,7 +195,7 @@ namespace rdfcsa {
                 //Report results
                 res.emplace_back(tuple);
             }else{
-                var_type x_j = m_gao[j];
+                var_type x_j = m_gao.next();
                 std::vector<ltj_iter_type*>& itrs = m_var_to_iterators[x_j];
                 bool ok;
                 if(itrs.size() == 1 && itrs[0]->in_last_level()) {//Lonely variables
@@ -212,6 +213,7 @@ namespace rdfcsa {
                         std::cout << "down(x_j=" << (uint64_t) x_j << " c=" << c << ")" << std::endl;
 #endif
                         itrs[0]->down(x_j, c);
+                        m_gao.down();
                         //2. Search with the next variable x_{j+1}
                         ok = search(j + 1, tuple, res, start, limit_results, timeout_seconds);
                         if(!ok) return false;
@@ -220,6 +222,7 @@ namespace rdfcsa {
 #endif
                         //4. Going up in the trie by removing x_j = c
                         itrs[0]->up(x_j);
+                        m_gao.up();
                     }
                 }else {
                     value_type c = seek(x_j);
@@ -236,6 +239,7 @@ namespace rdfcsa {
                         for (ltj_iter_type* iter : itrs) {
                             iter->down(x_j, c);
                         }
+                        m_gao.down();
                         //3. Search with the next variable x_{j+1}
                         ok = search(j + 1, tuple, res, start, limit_results, timeout_seconds);
                         if(!ok) return false;
@@ -246,11 +250,15 @@ namespace rdfcsa {
                         for (ltj_iter_type *iter : itrs) {
                             iter->up(x_j);
                         }
+                        m_gao.up();
                         //5. Next constant for x_j
                         c = seek(x_j, c + 1);
-                        //std::cout << "Seek (bucle): (" << (uint64_t) x_j << ": " << c << ")" <<std::endl;
+#if VERBOSE
+                        std::cout << "Seek (bucle): (" << (uint64_t) x_j << ": " << c << ")" <<std::endl;
+#endif
                     }
                 }
+                m_gao.done();
             }
             return true;
         };

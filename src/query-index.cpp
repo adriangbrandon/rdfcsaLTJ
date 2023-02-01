@@ -178,7 +178,10 @@ void query(const std::string &file, const std::string &queries){
 
             rdfcsa::ltj_algorithm<index_type> ltj(&query, &graph);
 
-            typedef std::vector<typename rdfcsa::ltj_algorithm<index_type>::tuple_type> results_type;
+            typedef typename rdfcsa::ltj_algorithm<index_type>::var_type var_type;
+            typedef typename rdfcsa::ltj_algorithm<index_type>::value_type value_type;
+            typedef typename rdfcsa::ltj_algorithm<index_type>::tuple_type tuple_type;
+            typedef std::vector<tuple_type> results_type;
             results_type res;
 
             std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
@@ -203,6 +206,13 @@ void query(const std::string &file, const std::string &queries){
             cout << nQ <<  ";" << res.size() << ";" << (unsigned long long)(total_time*1000000000ULL) << endl;
             nQ++;
 
+            for(auto& tuple : res){
+                std::sort(tuple.begin(), tuple.end());
+                for(const auto& r : tuple){
+                    std::cerr << r.first << "=" << r.second << " ";
+                }
+                std::cerr << std::endl;
+            }
             // cout << std::chrono::duration_cast<std::chrono::nanoseconds> (end - begin).count() << std::endl;
 
             //cout << "RESULTS QUERY " << count << ": " << number_of_results << endl;

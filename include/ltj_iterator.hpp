@@ -194,11 +194,11 @@ namespace rdfcsa {
 
         value_type leap(var_type var, size_type c = 1) {
             if (is_variable_subject(var)) {
-                leap_dual(m_iterator, SUBJECT, c);
+                return leap_dual(m_iterator, SUBJECT, c);
             } else if (is_variable_predicate(var)) {
-                leap_dual(m_iterator, PREDICATE, c);
+                return leap_dual(m_iterator, PREDICATE, c);
             } else {
-                leap_dual(m_iterator, OBJECT, c);
+                return leap_dual(m_iterator, OBJECT, c);
             }
         };
 

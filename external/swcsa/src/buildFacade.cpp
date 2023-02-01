@@ -568,7 +568,7 @@ uint leap_dual(void *iterator, int type, uint value) {
 		//2. recovers the x=leap() value, and x>0 it also shortens the source interval (increases the left of the range)
 					ulong longleft = *left;  		//TRICK-ini : copies *left (32bit value) to a ulong (64bit) variable "longleft"
 		retval = dual_searchPsiTarget_to_leap (dualrdf->spo, &longleft, (ulong) right, tl,tr);  
-					*left = longleft;	     		//TRICK-ends: restores posibly modified *left from the ulong variable "longleft"
+					//*left = longleft;	     		//TRICK-ends: restores posibly modified *left from the ulong variable "longleft"
 				
 		//recall that if retval>0 then "left" = (range[0] ir range [2]) was also updated (actually increased)..	
 		return retval;
@@ -628,7 +628,7 @@ uint leap_dual(void *iterator, int type, uint value) {
 			//2. recovers the x=leap() value, and x>0 it also shortens the source interval (increases the left of the range)
 						ulong longleft = *left;  		//TRICK-ini : copies *left (32bit value) to a ulong (64bit) variable "longleft"
 			retval = dual_searchPsiPsiTarget_to_leap (dualrdf->spo, &longleft, (ulong) right, tl,tr);  
-						*left = longleft;	     		//TRICK-ends: restores posibly modified *left from the ulong variable "longleft"
+						//*left = longleft;	     		//TRICK-ends: restores posibly modified *left from the ulong variable "longleft"
 					
 			//recall that if retval>0 then "left" = (range[0] ir range [2]) was also updated (actually increased)..	
 			
