@@ -209,7 +209,7 @@ void query(const std::string &file, const std::string &queries){
             for(auto& tuple : res){
                 std::sort(tuple.begin(), tuple.end());
                 for(const auto& r : tuple){
-                    std::cerr << r.first << "=" << r.second << " ";
+                    std::cerr << (uint64_t) r.first << "=" << r.second << " ";
                 }
                 std::cerr << std::endl;
             }
