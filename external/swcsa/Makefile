@@ -3,10 +3,58 @@ CC          = g++
 
 
 #######################################################################
-# CHOOSE PSI COMPRESSION TYPE
+# CHOOSE PSI COMPRESSION TYPE BY properly SETTING PSI_FLAGS
 #######################################################################
-PSI_FLAGS = -DPSI_R3H -DR3H_WITHGAPS
-#PSITYPE   =  PSI_R3H_GAPS
+# #PSITYPE   =  PSI_R3H_GAPS
+# 
+# 	PSI_FLAGS = -DPSI_R3H -DR3H_WITHGAPS
+# 
+# 
+# 
+# #  [buscar velocidad: S y O en plano (uin32 o log2bits), P con PsiHuffmanRle3R]
+#      #  [RDFCSA3RHyb       :     :375]  *usando log_k bits !! para S y Os.
+#      #  [RDFCSA3RHy-Gap    : GAPS:375]  *usando log_k bits !! para S y Os.
+#      #  [RDFCSA3RHy-u32    :     :375]  *usando uint32s    !! para S y Os.
+#      #  * Codifico valores de Psi con 3 rangos.
+#      #       -S y O como uint32, o como log_k-bits (en este caso usando o no gaps)
+#      #       -P codificado como HuffmanRLE3r.
+#             
+# #PSITYPE   =  PSI_R3HYBRID        
+# 	PSI_FLAGS = -DPSI_R3HYBRID -DPSI_PLAIN_LOG_BASED
+# 
+# #PSITYPE   =  PSI_R3HYBRID_GAPS	
+# 	PSI_FLAGS = -DPSI_R3HYBRID -DPSI_PLAIN_LOG_BASED -DR3H_WITHGAPS 
+# 
+# #PSITYPE   =  PSI_R3HYBRID_UINT32
+# 	PSI_FLAGS = -DPSI_R3HYBRID 
+
+
+
+# type either in the command-line   ...> see compile.sh
+#     export PSITYPE=PSI_R3H_GAPS
+#	  export PSITYPE=PSI_R3HYBRID_GAPS
+
+
+ifeq ($(PSITYPE),PSI_R3HYBRID)
+	PSI_FLAGS = -DPSI_R3HYBRID -DPSI_PLAIN_LOG_BASED 
+else ifeq ($(PSITYPE),PSI_R3HYBRID_GAPS) 
+	PSI_FLAGS = -DPSI_R3HYBRID -DPSI_PLAIN_LOG_BASED -DR3H_WITHGAPS 
+else ifeq ($(PSITYPE),PSI_R3HYBRID_UINT32) 
+	PSI_FLAGS = -DPSI_R3HYBRID 
+	
+
+else ifeq ($(PSITYPE),PSI_R3H_GAPS)
+	PSI_FLAGS = -DPSI_R3H -DR3H_WITHGAPS -DPSI_PLAIN_LOG_BASED
+		
+
+else   #default option  PSI_R3CLS_GAPS
+	PSI_FLAGS = -DPSI_R3CLS_GAPS -DR3H_WITHGAPS -DPSI_PLAIN_LOG_BASED 
+	#PSI_FLAGS = -DPSI_R3H -DR3H_WITHGAPS -DPSI_PLAIN_LOG_BASED	
+	export PSITYPE=
+endif
+
+
+
 
 #######################################################################
 # CHOOSE D BITMAP COMPRESSION STRATEGY
@@ -19,15 +67,19 @@ BITMAPTYPE= -DBITMAP_375
 ##options: 
 	## -DSKIPMAXMINDEF   --> if min/max macros cause redefinition, this avoids defining min/max    (see src/utils/basics.h)
 	## -DSKIP_CHECK_PSI_WORKS_OK  --> after compressing Psi, skips performing decompression check. (see src/intIndexUtils/*.c)
-	## -DSHOW_RESULTS      --> show the results of each query  (2020, not sure it actually does:D) (see src/benchmark.cpp)
+	## -DNO_TEST_SPO_EQ_OPS     --> in BuildAllDual.c, skips comparison SPO-OPS test; i.e. calling to testRecoverAndCompareSPO_OPS_dump().
+	## -DSHOW_RESULTS      --> show the results of each query  (2020, not sure what it actually does:D) (see src/benchmark.cpp)
 	## Variantes de select:
 	## SELECT_BASE (dous select, sen samples), SELECT_SAMPLES (dous select, con samples), SELECT_DUAL (dual_select)
      
 #GENFLAGS = -DEXPERIMENTS -DNDEBUG -DSKIPMAXMINDEF 
-GENFLAGS = -DEXPERIMENTS -DNDEBUG -DSKIPMAXMINDEF -DSKIP_CHECK_PSI_WORKS_OK
+GENFLAGS = -DEXPERIMENTS -DNDEBUG -DSKIPMAXMINDEF -DSKIP_CHECK_PSI_WORKS_OK -DNO_TEST_SPO_EQ_OPS
 
 
-export CFLAGS  =  -O0 -g   -m64 $(GENFLAGS) $(BITMAPTYPE) $(PSI_FLAGS)
+
+#export CFLAGS  =  -O0 -g   -m64 $(GENFLAGS) $(BITMAPTYPE) $(PSI_FLAGS)
+#export CFLAGS  =  -O3   -m64 $(GENFLAGS) $(BITMAPTYPE) $(PSI_FLAGS)
+export CFLAGS  =  -msse4.2 -O3  -ffast-math -funroll-loops   -m64 $(GENFLAGS) $(BITMAPTYPE) $(PSI_FLAGS)
 
 
 
@@ -42,9 +94,10 @@ export CFLAGS  =  -O0 -g   -m64 $(GENFLAGS) $(BITMAPTYPE) $(PSI_FLAGS)
 
  export SRCDIRISI  = intIndex_qsort
 
-# export NAMEINDEX   = wcsa_$(PSITYPE)
- export NAMEINDEX   = wcsa
- export LIBINDEX    = libswcsa.a
+ export NAMEINDEX   = wcsa$(PSITYPE)
+ export LIBINDEX    = libswcsa$(PSITYPE).a
+# export NAMEINDEX   = wcsa
+# export LIBINDEX    = libswcsa.a
  export LIBINTINDEX = icsa.a
 
 

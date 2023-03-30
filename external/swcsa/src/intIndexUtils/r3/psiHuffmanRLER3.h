@@ -111,6 +111,16 @@ void getHuffmanPsiR3ValueBuffer(HuffmanCompressedPsiR3 *cPsi, uint *buffer, size
 int getfindHuffmanPsiR3ValueBuffer(HuffmanCompressedPsiR3 *cPsi, uint *buffer, size_t ini, size_t end, ulong fst, ulong sec, ulong *i1, ulong *i2);
 int getfindHuffmanPsiR3Value(HuffmanCompressedPsiR3 *cPsi, size_t ini, size_t end, ulong fst, ulong sec, ulong *i1, ulong *i2);
 
+
+//simulates decompression from ini to end, and during the process:
+// sets in i1 de position (from ini on) of the fst   value >= fst  and <=sec
+// stops if i1 was set
+// returns 0 if all values are < fst.
+// returns x+1, where x is  the first value >= fst and <=sec was found    (+1 to ensure zero is not returned as a valid value);
+
+ulong getfindLeftOnlyHuffmanPsiR3Value(HuffmanCompressedPsiR3 *cPsi, size_t ini, size_t end, ulong fst, ulong sec, ulong *i1);
+ 
+
 void storeHuffmanCompressedPsiR3(HuffmanCompressedPsiR3 *compressedPsi, char *filename);
 HuffmanCompressedPsiR3 loadHuffmanCompressedPsiR3(char *filename);
 

@@ -41,6 +41,13 @@ typedef struct
      uint *num;  // first pos of each length (dec), number of each length (enc)
      uint *fst;  // first code (numeric) of each length (dec)
      size_t total; // total length to achieve, in bits
+     
+    //2023-fari  (using decoding tables)
+	//uint bb = 1<<H->depth
+	//uint b; //  = H->depth;
+	//uint *lookuptable ;
+	//uint *lookupptrgap;
+     
    } THuff;
 
 	// Creates Huffman encoder given symbols 0..lim with frequencies 
@@ -58,10 +65,14 @@ size_t encodeHuff (THuff H, uint symb, uint *stream, size_t ptr);
 	// bit positions of stream). Returns the new ptr.
 	
 size_t decodeHuff (THuff *H, uint *symb, uint *stream, size_t ptr);
+//size_t decodeHuff_src (THuff *H, uint *symb, uint *stream, size_t ptr);   //2023-test
+//size_t decodeHuffTables (THuff *H, uint *symb, uint *stream, size_t ptr); //2023-test
 
 	//Prepares a Huffman tree for decoding (changes in spos & symb)
 	
 void prepareToDecode(THuff *H);
+
+//void prepareToDecodeWithTables(THuff *H); // fari 2023
 
 	// Writes H in file f
 	

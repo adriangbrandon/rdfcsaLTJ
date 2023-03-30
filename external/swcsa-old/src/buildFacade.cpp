@@ -494,6 +494,7 @@ uint leap_dual(void *iterator, int type, uint value) {
 	 * 			                SPO ou OPS (indistinto): sujetos [1,ns], objetos [gapobjects, gapobjects+no-1] ?
 	 **/ 
 
+	if ((type ==OBJECT) && (value <= dualrdf->spo->gapobjects)) value = 1+dualrdf->spo->gapobjects;
 	if (! dual_isValidValue_for_Type_in_Input(dualrdf->spo,type,value)) return 0;
 	
 	/****/
@@ -570,9 +571,11 @@ uint leap_dual(void *iterator, int type, uint value) {
 
 		//2. recovers the x=leap() value, and x>0 it also shortens the source interval (increases the left of the range)
 					ulong longleft = *left;  		//TRICK-ini : copies *left (32bit value) to a ulong (64bit) variable "longleft"
+
 /** 	retval = dual_searchPsiTarget_to_leap (dualrdf->spo, &longleft, (ulong) right, tl,tr);  */
 		retval = dual_searchPsiTarget_to_leap ( g,           &longleft, (ulong) right, tl,tr);  
-					*left = longleft;	     		//TRICK-ends: restores posibly modified *left from the ulong variable "longleft"
+
+					//*left = longleft;	     		//TRICK-ends: restores posibly modified *left from the ulong variable "longleft"
 				
 		//recall that if retval>0 then "left" = (range[0] ir range [2]) was also updated (actually increased)..	
 		return retval;
@@ -634,7 +637,7 @@ uint leap_dual(void *iterator, int type, uint value) {
 	   /** retval = dual_searchPsiPsiTarget_to_leap (dualrdf->spo, &longleft, (ulong) right, tl,tr);  **/
 		   retval = dual_searchPsiPsiTarget_to_leap ( g,           &longleft, (ulong) right, tl,tr);  
 			
-						*left = longleft;	     		//TRICK-ends: restores posibly modified *left from the ulong variable "longleft"
+					//	*left = longleft;	     		//TRICK-ends: restores posibly modified *left from the ulong variable "longleft"
 					
 			//recall that if retval>0 then "left" = (range[0] ir range [2]) was also updated (actually increased)..	
 			
@@ -806,6 +809,7 @@ int up_dual(void *iterator) {                           //numfijadas -- e actual
 	if (it->nFixed ==2) {
 		memcpy(it->range, it->range_backup, 4*sizeof(uint)); 
 	}	
+	
 	it->nFixed--;
 	return 0;
 }
@@ -828,13 +832,14 @@ uint get_range_length_dual (void *iterator) {
 	size_t n = dualrdf->spo->n;          //numberofTriples	
 
 	if (it->nFixed ==0) {
-		return n;
+		return 3*n;
 	}
 	else if (it->nFixed ==1) {
-		return (it->range[1]- it->range[0] +1);   //equals to -->	ulong len_ops = it->range[1]- it->range[0] +1;		
+		return (it->range[1]- it->range[0] +1);   //equals to -->	ulong len_ops = it->range[3]- it->range[2] +1;		
 	}
 	else if (it->nFixed ==2) {
-		ulong len1 = it->range[1]- it->range[0] +1;   ulong len2 = it->range[3]- it->range[2] +1;
+		ulong len1 = it->range[1]- it->range[0] +1;   
+		ulong len2 = it->range[3]- it->range[2] +1;
 		ulong min_len=  (len1<len2) ? len1 : len2;
 		return min_len;
 	}	
@@ -845,7 +850,7 @@ uint get_range_length_dual (void *iterator) {
 
 // para un iterador.
 int is_last_level_dual(void *iterator) {
-	//returns 1 se hai >2 variables fixadas   numFijadas >=2
+	//returns 1 se hai >=2 variables fixadas   numFijadas >=2
 	//returns 0 otherwise (se hai 0 o 1 variables fixadas)
 
 	t_iterator *it = (t_iterator *) iterator;
@@ -927,6 +932,7 @@ std::vector <uint> get_all_dual (void *iterator, int type) {
 		uint pos; uint value;
 		for (i=left; i<=right; i++) {
 			pos=bufferpsi[i-left];
+			pos = getPsiicsa(g->myicsa,pos);         //** now l,r is 2 ranges before than expectedtype --> pos = \psi(\psi(i-left))
 			value = getRankicsa(g->myicsa,pos) -1;
 			value = unmapID(g, value, type);
 			
@@ -934,7 +940,12 @@ std::vector <uint> get_all_dual (void *iterator, int type) {
 		}
 		free(bufferpsi);
 	}
-	
+
+//  Adrian said we cannot call this function when nFixed =3 
+//	if (it->nFixed ==3) {
+//		return it->valueFixed[2];
+//	}
+//	
 	return res;	  
 	//Adrian, entendo que res é un vector valeiro, e ti miras o seu tamaño (por se pasas un nFixed !=2, e eu devolvo
 	//        un vector sen facer ningún push_back();
@@ -2236,8 +2247,9 @@ uint dual_searchPsiTarget_to_leap(twcsa *g, ulong *left, ulong right, ulong tl, 
 		*left = l; //updates only *left   (right is not modified) 
 		ulong x = getPsiicsa(g->myicsa,l);
 		uint ret = dual_valueFromPos(g,x); //the value at *left :D 
-										   // could also be returned by a modified 
+										   // could also be returned by a creating a modified 
 										   // binSearchPsiTarget_samplesFirst - variant. TO-DO
+										   // that also computes it (so we avoid the call to getPsiicsa() above)
 		return ret;
 	}
 	return 0;	
@@ -2255,7 +2267,7 @@ uint dual_searchPsiPsiTarget_to_leap(twcsa *g, ulong *left, ulong right, ulong t
 		      x = getPsiicsa(g->myicsa,x);
 		uint ret = dual_valueFromPos(g,x); //the value at *left :D 
 										   // could also be returned by a modified 
-										   // binSearchPsiTarget_samplesFirst - variant. TO-DO
+										   // binSearchPsiPsiTarget  ??
 		return ret;
 	}
 	return 0;	
@@ -2266,7 +2278,7 @@ uint dual_searchPsiPsiTarget_to_leap(twcsa *g, ulong *left, ulong right, ulong t
 //*********************************************************************************
 //Computes the positions i in [left,right] such that forall i, \Psi[i] \in in [tl,rt].
 //		- Updates *left  and *right is updated
-//		- Then updates *left = getPsiValue( *left), and *right = getPsiValue (*right).
+//		- Then updates *left = getPsiValue( *left), and *right = getPsiValue (*right).  <-- no
 int dual_searchPsiTarget_to_down(twcsa *g, ulong *left, ulong *right, ulong tl, ulong tr) {
 	ulong l=*left;
 	ulong numocc;
@@ -2274,9 +2286,9 @@ int dual_searchPsiTarget_to_down(twcsa *g, ulong *left, ulong *right, ulong tl, 
 	binSearchPsiTarget_samplesFirst(g->myicsa,left,right,&numocc,tl,tr);
 //	printf("\n left = %lu, right = %lu",*left, *right);
 	
-	if (*left != l) {
-		printf("\n buildFacade.c dual_searchPsiTarget_to_down():: LEFT HA CAMBIADO Y NO DEBERIA: (viejo) %lu != %lu (nuevo)\n",l, *left);
-	}
+	//if (*left != l) {
+	//	printf("\n buildFacade.c dual_searchPsiTarget_to_down():: LEFT HA CAMBIADO Y NO DEBERIA: (viejo) %lu != %lu (nuevo)\n",l, *left);
+	//}
 	
 //	*left  = getPsiicsa(g->myicsa, *left);
 //	*right = getPsiicsa(g->myicsa,*right);

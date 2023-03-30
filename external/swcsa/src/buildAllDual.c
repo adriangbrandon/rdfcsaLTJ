@@ -71,7 +71,7 @@ int main(int argc, char* argv[])
 
 	start = getTime();
 	
-testAdrian(3,4);
+//testAdrian(3,4);
 
 	//reads source data and adds dummie triple and terminator.
 	//	parseFileHDTformat_IntoGraph(infilebase,&graph);
@@ -127,15 +127,41 @@ testAdrian(3,4);
 
 			{	// frees se array to avoid swapping in wiki-larger dataset (msi - 64gb ram)
 				tdualrdfcsa *dualrdf = (tdualrdfcsa *) index;
-				my_free_array (dualrdf->spo->s);  dualrdf->spo->s = NULL;
+				if (dualrdf->spo->s )
+					my_free_array (dualrdf->spo->s);  dualrdf->spo->s = NULL;
 				my_free_array (dualrdf->ops->s);  dualrdf->ops->s = NULL;
 								
-		
+	#ifdef NO_TEST_SPO_EQ_OPS		//see makefile
+				fprintf(stderr, "\n \t --testRecoverAndCompareSPO_OPS skipped (see Makefile: NO_TEST_SPO_EQ_OPS flag) \n\n" );
+	#else 
 				start = getTime();
 				testRecoverAndCompareSPO_OPS_dump(index);	
 				end = getTime2();	
-				fprintf(stderr, " comparison time: %.3f secs\n", end-start );	
+				fprintf(stderr, "\n \tcomparison time: %.3f secs\n", end-start );					
+	#endif				
 			}
+
+
+
+		/* final stats */
+		ulong text_len;
+		error = get_length_dual(index, &text_len);
+		text_len *= sizeof(uint);
+		
+
+
+		fprintf(stdout,"\t===============================================\n");
+		fprintf(stdout,"\tInput: %lu bytes (assuming uint-values) --> Output %lu bytes (wcsa).\n", text_len, indexsize);
+		fprintf(stderr,"\tIndex size = %lu Kb\n", indexsize/1024);
+		//fprintf(stdout,"\tOverall compression --> %.2f%% (%.2f bits per char).\n",
+		//			(100.0*indexsize)/text_len, (indexsize*8.0)/text_len);
+		fprintf(stdout,"\tOverall compression --> %.2f%% (%.2f bytes per triple).\n",
+					(100.0*indexsize)/text_len, (indexsize*12.0)/text_len);
+		fprintf(stdout,"\t===============================================\n");
+
+
+		
+
 
 
 		/** freeing the index */	
@@ -145,11 +171,6 @@ testAdrian(3,4);
 	}
 	
 	free(params);
-	
-	//fprintf(stdout,"\n\n\t ## Building time (**parsing into integers + present_layer: %.3f secs", end-start );
-	//fprintf(stdout,"\n\t ## Input: %lu bytes --> Output (pres_layer) %lu bytes.", text_len, index_len);
-	//fprintf(stdout,"\n\t ## Overall compression --> %.2f%% (%.2f bits per char).\n\n",
-    // 			(100.0*index_len)/text_len, (index_len*8.0)/text_len);
 
 	exit(0);	
 }

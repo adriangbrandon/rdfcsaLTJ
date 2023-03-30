@@ -398,8 +398,11 @@ int po (void *gindex, int P, int O, uint **buffer) {
 		uint *res_o = res+1+ (MAX_RESULTS)*2;
 
 		l=lp;r=rp;
-		//binSearchPsiTarget(g->myicsa, &l,&r, &numocc, lo, ro);		
+			//binSearchPsiTarget(g->myicsa, &l,&r, &numocc, lo, ro);	
+			
 		binSearchPsiTarget_samplesFirst(g->myicsa, &l,&r, &numocc, lo, ro);
+		//expSearchPsiTarget_samplesFirst(g->myicsa, &l,&r, &numocc, lo, ro);
+
 
 		if (!numocc) return res[0];
 	//	printf("\n BSearchP-O= ls,rs = [%lu, %lu]",l,r);
@@ -1023,7 +1026,7 @@ int dual_rdfcsaOPS_op (void *gindex, int O, int P, unsigned int **buffer) {
 
 
 int dual_test_po_op(void *index, uint **res, uint **res2) {
-	printf("\n call to dual_test_so_os\n");
+	printf("\n call to dual_test_po_op\n");
 
 double start ,end;
 

@@ -60,3 +60,12 @@ make clean;
 	make clean;
 
 	########################################################################
+
+#2023-march: unified class for psi-representations (with 3R)
+
+#default: hybrid option	(subjects, predicates, and objects with huffmanRLE, Plain log2_k bits, or PlainRLE depending on build options "psitypespo=213, psitypeops=312")
+	#1=HuffmanRLE-gaps, #2=Plain-gaps #3=plainRLE-gaps
+	export PSITYPE=PSI_R3CLS_GAPS
+	export BITMAPTYPE=BITMAP_375
+	make clean;
+	

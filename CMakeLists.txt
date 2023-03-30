@@ -54,4 +54,9 @@ add_executable(build-index src/build-index.cpp)
 target_link_libraries(build-index ${CMAKE_SOURCE_DIR}/lib/libswcsa.a sdsl divsufsort divsufsort64)
 
 add_executable(query-index src/query-index.cpp)
+target_compile_definitions(query-index PUBLIC ADAPTIVE=1)
 target_link_libraries(query-index ${CMAKE_SOURCE_DIR}/lib/libswcsa.a sdsl divsufsort divsufsort64)
+
+add_executable(query-index-fixed src/query-index.cpp)
+target_compile_definitions(query-index-fixed PUBLIC ADAPTIVE=0)
+target_link_libraries(query-index-fixed ${CMAKE_SOURCE_DIR}/lib/libswcsa.a sdsl divsufsort divsufsort64)

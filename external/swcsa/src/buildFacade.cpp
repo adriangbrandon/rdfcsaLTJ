@@ -42,6 +42,50 @@
 // 
 
 
+
+
+
+// Initializes the parameters of the index.
+uint parametersFacade(uint *psitypes, uint *psitypes_ops, char *build_options){ 
+	char delimiters[] = " =;";
+	int j,num_parameters;
+	char ** parameters;
+		
+	psitypes[0]    = psitypes[1]    =psitypes[2]    =0; // {0,0,0};     //default psi compressed with 3RANGES + HUFFMANRLE
+	psitypes_ops[0]= psitypes_ops[1]=psitypes_ops[2]=0;// {0,0,0}; 
+	
+	if (build_options != NULL) {
+	parse_parameters(build_options,&num_parameters, &parameters, delimiters);
+	for (j=0; j<num_parameters;j++) {
+
+		if ((strcmp(parameters[j], "psitypespo") == 0 ) && (j < num_parameters-1) ) {
+			int val=atoi(parameters[j+1]);
+			psitypes[2]=val%10; val/=10;
+			psitypes[1]=val%10; val/=10;
+			psitypes[0]=val%10;
+		} 
+
+		if ((strcmp(parameters[j], "psitypeops") == 0 ) && (j < num_parameters-1) ) {
+			int val=atoi(parameters[j+1]);
+			psitypes_ops[2]=val%10; val/=10;
+			psitypes_ops[1]=val%10; val/=10;
+			psitypes_ops[0]=val%10;
+		} 
+
+		j++;
+	}
+	free_parameters(num_parameters, &parameters);
+	}		
+
+	printf("\n\t parameters for RDFCSA-facade:");
+	printf("\n\t              : psitypespo ={%u,%u,%u}, psitypeops ={%u,%u,%u}", psitypes[0], psitypes[1], psitypes[2], 
+	                                                                             psitypes_ops[0], psitypes_ops[1], psitypes_ops[2]);
+	return 0;
+}
+
+
+
+
 	
 /** ******************************************************************************
     * INI functions in Interface dual RDFCSA spo & ops.
@@ -56,6 +100,26 @@ void testAdrian(uint32_t a, uint32_t b) {
 }
 
 
+//frees the memory associated to the iterador
+//returns NULL;
+//call it as: iter = destroyIterator_dual(iter);
+void * destroyIterator_dual(void *index) {
+	t_iterator *it = (t_iterator *) index;
+	if (it) {
+		//if (it->buffer) {
+		//	free (it->buffer);
+		//	it->buffer=NULL;
+		//}
+		
+		if (it->iter_psi) {
+			delete (psi_rep_iterator *) it->iter_psi;
+			it->iter_psi=NULL;
+		}
+
+		free(it);
+	}
+	return NULL;	
+}
 
 
 //Creates a ltf-iterator with none variables set.
@@ -69,7 +133,6 @@ void * createIterator_dual(void *index) {
 	size_t nE = dualrdf->spo->nEntries;  //numberofTriples
 					//rdfcsa 3 ranges==> [0 .. n-1][n .. 2n-1][2n .. 3n-1]
 								
-
 	t_iterator *it = (t_iterator *) malloc (sizeof(t_iterator)*1);
 	it->nFixed=0;
 		//it->typeFixed[0]=0;
@@ -80,8 +143,50 @@ void * createIterator_dual(void *index) {
 	
 	it->dualrdfcsa = index;
 	
+
+
+	it->estado_leap_type    = NO_TYPE_SET_OPS;
+	it->estado_leap_value  	= 1; //none
+	it->estado_leap_leftpos	= 0; //none
+	
+	//it->buffer=NULL; //will be allocated if a call to get_one_dual_init() is done
+	it->active_g=NULL; //set the pointer
+	it->iter_psi=NULL;
+	it->tpsi = getTPSI_value(dualrdf->spo->myicsa);
+	
 	return it;
 }
+
+
+//Makes a copy of the ltf-iterator.
+//Returs a void * pointer to a new t_iterator structure.
+void * cloneIterador_dual(void* iteratorsrc) {
+	//básicamente facer un memcpy (sizeof(structura iterador) ...).
+	//returns:
+		//una copia del iteradorsrc.
+		//malloc (sizeof(structura)
+		//memcpy (...)
+	//Se necesita xq  Adrián podría necesitar clonar los iteradores...
+	
+	t_iterator *itsrc = (t_iterator *) iteratorsrc;
+	t_iterator *it    = (t_iterator *) malloc (sizeof(t_iterator)*1);
+	memcpy(it,itsrc,sizeof(t_iterator)*1);
+
+	it->estado_leap_type    = NO_TYPE_SET_OPS;   //does not clone leap (maybe slightly slower at first leap() in cloned it)
+	it->estado_leap_value  	= 1; //none
+	it->estado_leap_leftpos	= 0; //none
+
+	//it->active_g DO NOTHING as the pointer is also copied in previous memcpy
+	//it->iter_psi //DO NOTHING as the pointer is also copied in previous memcpy  ?? - NEEDs a new psi_rep_iterator object (see below).
+	
+	it->iter_psi=NULL;
+	if (itsrc->iter_psi) {
+		it->iter_psi = ((psi_rep_iterator *)itsrc->iter_psi)->clone();
+	}
+		
+	return it;	
+}
+
 
 
 	char *printTypeFixed(uchar *typeFixed, uint nFixed);  //used in printIterator_dual()
@@ -134,25 +239,6 @@ void printIterator_dual(void * iterator) {
 }
 
 
-//Makes a copy of the ltf-iterator.
-//Returs a void * pointer to a new t_iterator structure.
-void * cloneIterador_dual(void* iteratorsrc) {
-	//básicamente facer un memcpy (sizeof(structura iterador) ...).
-	//returns:
-		//una copia del iteradorsrc.
-		//malloc (sizeof(structura)
-		//memcpy (...)
-	//Se necesita xq  Adrián podría necesitar clonar los iteradores...
-	
-	t_iterator *itsrc = (t_iterator *) iteratorsrc;
-	t_iterator *it    = (t_iterator *) malloc (sizeof(t_iterator)*1);
-	memcpy(it,itsrc,sizeof(t_iterator)*1);
-	
-	return it;	
-}
-
-
-
 
 
 int init_spo_dual(void *iterator, uint s, uint p, uint o) {
@@ -167,11 +253,20 @@ int init_spo_dual(void *iterator, uint s, uint p, uint o) {
 	size_t n = dualrdf->spo->n;          //numberofTriples
 	size_t nE = dualrdf->spo->nEntries;  //numberofEntries per triple = 3
 
+	it->estado_leap_type    = NO_TYPE_SET_OPS;
+	it->estado_leap_value  	= 1; //none
+	it->estado_leap_leftpos	= 0; //none
 
 	//valid or not valid s,p,o
-	if (! dual_isValidValue_for_Type_in_Input(dualrdf->spo,SUBJECT,s)) return 0;
-	if (! dual_isValidValue_for_Type_in_Input(dualrdf->spo,PREDICATE,p)) return 0;
-	if (! dual_isValidValue_for_Type_in_Input(dualrdf->spo,OBJECT,o)) return 0;
+//	if (! dual_isValidValue_for_Type_in_Input(dualrdf->spo,SUBJECT,s)) return 0;
+//	if (! dual_isValidValue_for_Type_in_Input(dualrdf->spo,PREDICATE,p)) return 0;
+//	if (! dual_isValidValue_for_Type_in_Input(dualrdf->spo,OBJECT,o)) return 0;
+
+	ulong **rangesvalid = dualrdf->RANGEVALID;
+	if (! dual_isValidValue_for_Type_in_Input_Matrix(rangesvalid,SUBJECT,s)) return 0;
+	if (! dual_isValidValue_for_Type_in_Input_Matrix(rangesvalid,PREDICATE,p)) return 0;
+	if (! dual_isValidValue_for_Type_in_Input_Matrix(rangesvalid,OBJECT,o)) return 0;
+
 
 
 	uint left,right;
@@ -209,11 +304,16 @@ int init_so_dual(void *iterator, uint s, uint o) {
 	size_t n = dualrdf->spo->n;          //numberofTriples
 	size_t nE = dualrdf->spo->nEntries;  //numberofEntries per triple = 3
 
-
+	it->estado_leap_type    = NO_TYPE_SET_OPS;
+	it->estado_leap_value  	= 1; //none
+	it->estado_leap_leftpos	= 0; //none	
 	//valid or not valid s,o
-	if (! dual_isValidValue_for_Type_in_Input(dualrdf->spo,SUBJECT,s)) return 0;
-	if (! dual_isValidValue_for_Type_in_Input(dualrdf->spo,OBJECT,o)) return 0;
+	//if (! dual_isValidValue_for_Type_in_Input(dualrdf->spo,SUBJECT,s)) return 0;
+	//if (! dual_isValidValue_for_Type_in_Input(dualrdf->spo,OBJECT,o)) return 0;
 
+	ulong **rangesvalid = dualrdf->RANGEVALID;
+	if (! dual_isValidValue_for_Type_in_Input_Matrix(rangesvalid,SUBJECT,s)) return 0;
+	if (! dual_isValidValue_for_Type_in_Input_Matrix(rangesvalid,OBJECT,o)) return 0;
 
 	uint left,right;
 
@@ -254,12 +354,18 @@ int init_sp_dual(void *iterator, uint s, uint p){
 	size_t n = dualrdf->spo->n;          //numberofTriples
 	size_t nE = dualrdf->spo->nEntries;  //numberofEntries per triple = 3
 
-	uint left,right;
-
+	it->estado_leap_type    = NO_TYPE_SET_OPS;
+	it->estado_leap_value  	= 1; //none
+	it->estado_leap_leftpos	= 0; //none
+	
 	//valid or not valid s,p
-	if (! dual_isValidValue_for_Type_in_Input(dualrdf->spo,SUBJECT,s)) return 0;
-	if (! dual_isValidValue_for_Type_in_Input(dualrdf->spo,PREDICATE,p)) return 0;
+	//if (! dual_isValidValue_for_Type_in_Input(dualrdf->spo,SUBJECT,s)) return 0;
+	//if (! dual_isValidValue_for_Type_in_Input(dualrdf->spo,PREDICATE,p)) return 0;
+	ulong **rangesvalid = dualrdf->RANGEVALID;
+	if (! dual_isValidValue_for_Type_in_Input_Matrix(rangesvalid,SUBJECT,s)) return 0;
+	if (! dual_isValidValue_for_Type_in_Input_Matrix(rangesvalid,PREDICATE,p)) return 0;
 
+	uint left,right;
 	
 	if (! dual_rdfcsaSPO_init_sp( dualrdf->spo, s,p, &left, &right)) {
 		//DOES NOTHING with the fields of the iterator
@@ -299,11 +405,16 @@ int init_po_dual(void *iterator, uint p, uint o){
 	size_t n = dualrdf->spo->n;          //numberofTriples
 	size_t nE = dualrdf->spo->nEntries;  //numberofEntries per triple = 3
 
+	it->estado_leap_type    = NO_TYPE_SET_OPS;
+	it->estado_leap_value  	= 1; //none
+	it->estado_leap_leftpos	= 0; //none
 
 	//valid or not valid p,o
-	if (! dual_isValidValue_for_Type_in_Input(dualrdf->spo,PREDICATE,p)) return 0;
-	if (! dual_isValidValue_for_Type_in_Input(dualrdf->spo,OBJECT,o)) return 0;
-
+	//if (! dual_isValidValue_for_Type_in_Input(dualrdf->spo,PREDICATE,p)) return 0;
+	//if (! dual_isValidValue_for_Type_in_Input(dualrdf->spo,OBJECT,o)) return 0;
+	ulong **rangesvalid = dualrdf->RANGEVALID;
+	if (! dual_isValidValue_for_Type_in_Input_Matrix(rangesvalid,PREDICATE,p)) return 0;
+	if (! dual_isValidValue_for_Type_in_Input_Matrix(rangesvalid,OBJECT,o)) return 0;
 
 	uint left,right;
 	
@@ -344,8 +455,14 @@ int init_s_dual(void *iterator, uint s){
 	size_t n = dualrdf->spo->n;          //numberofTriples
 	size_t nE = dualrdf->spo->nEntries;  //numberofEntries per triple = 3
 
+	it->estado_leap_type    = NO_TYPE_SET_OPS;
+	it->estado_leap_value  	= 1; //none
+	it->estado_leap_leftpos	= 0; //none
+
 	//valid or not valid s
-	if (! dual_isValidValue_for_Type_in_Input(dualrdf->spo,SUBJECT,s)) return 0;
+	//if (! dual_isValidValue_for_Type_in_Input(dualrdf->spo,SUBJECT,s)) return 0;
+	ulong **rangesvalid = dualrdf->RANGEVALID;
+	if (! dual_isValidValue_for_Type_in_Input_Matrix(rangesvalid,SUBJECT,s)) return 0;
 
 
 	uint left,right;
@@ -387,9 +504,14 @@ int init_p_dual(void *iterator, uint p){
 	size_t n = dualrdf->spo->n;          //numberofTriples
 	size_t nE = dualrdf->spo->nEntries;  //numberofEntries per triple = 3
 
+	it->estado_leap_type    = NO_TYPE_SET_OPS;
+	it->estado_leap_value  	= 1; //none
+	it->estado_leap_leftpos	= 0; //none
+	
 	//valid or not valid p
-	if (! dual_isValidValue_for_Type_in_Input(dualrdf->spo,PREDICATE,p)) return 0;
-
+	//if (! dual_isValidValue_for_Type_in_Input(dualrdf->spo,PREDICATE,p)) return 0;
+	ulong **rangesvalid = dualrdf->RANGEVALID;
+	if (! dual_isValidValue_for_Type_in_Input_Matrix(rangesvalid,PREDICATE,p)) return 0;
 
 	uint left,right;
 	
@@ -430,9 +552,15 @@ int init_o_dual(void *iterator, uint o){
 	size_t n = dualrdf->spo->n;          //numberofTriples
 	size_t nE = dualrdf->spo->nEntries;  //numberofEntries per triple = 3
 
-	//valid or not valid o
-	if (! dual_isValidValue_for_Type_in_Input(dualrdf->spo,OBJECT,o)) return 0;
+	it->estado_leap_type    = NO_TYPE_SET_OPS;
+	it->estado_leap_value  	= 1; //none
+	it->estado_leap_leftpos	= 0; //none
 
+	//valid or not valid o
+	//if (! dual_isValidValue_for_Type_in_Input(dualrdf->spo,OBJECT,o)) return 0;
+	ulong **rangesvalid = dualrdf->RANGEVALID;
+	if (! dual_isValidValue_for_Type_in_Input_Matrix(rangesvalid,OBJECT,o)) return 0;
+	
 	uint left,right;
 	
 	if (! dual_rdfcsaSPO_init_o( dualrdf->spo, o, &left, &right)) {
@@ -455,15 +583,41 @@ int init_o_dual(void *iterator, uint o){
 	
 	it->nFixed=1;
 	it->typeFixed[0]=OBJECT;		it->valueFixed[0] = o;
-			
+	
 	return 1;	
 }
 
 
+//gets the first valid value of type "type" for this iterator.
+//uint leap_dual(void *iterator, int type) {
+//	uint value=1;
+//	
+//	//the first valid predicate and subject IDs are "1"
+//	//the first valid object ID is "1+gapobjects".
+//	
+//	if (type == OBJECT) {
+//		t_iterator *it = (t_iterator *) iterator;
+//		tdualrdfcsa *dualrdf = (tdualrdfcsa *) it->dualrdfcsa;	
+//		value = 1+dualrdf->spo->gapobjects;
+//	}
+//	return leap_dual(iterator, type, value);	
+//}
 
 
+// returns the 1st valid value for a given type
+uint min_of_type_dual(void *iterator, int type) {
+	t_iterator *it = (t_iterator *) iterator;
+	tdualrdfcsa *dualrdf = (tdualrdfcsa *) it->dualrdfcsa;	
+
+ 	if (type == OBJECT) 
+		return 1+dualrdf->spo->gapobjects;
+ 	
+ 	return 1;
+}
 
 //...
+//uint leap_dual(void *iterator, int type);   
+
 uint leap_dual(void *iterator, int type, uint value) {
 	//type: indica se estamos a buscar nun s, p ou o
 	//buscamos no rango do iterator o primeiro valor de tipo (type) >= value
@@ -477,7 +631,7 @@ uint leap_dual(void *iterator, int type, uint value) {
 
     //-- leap devolve CERO se non se atopa.
 
-	t_iterator *it = (t_iterator *) iterator;
+	t_iterator  *it = (t_iterator *) iterator;
 	tdualrdfcsa *dualrdf = (tdualrdfcsa *) it->dualrdfcsa;	
 	size_t n = dualrdf->spo->n;          //numberofTriples
 
@@ -487,15 +641,45 @@ uint leap_dual(void *iterator, int type, uint value) {
 		twcsa *g;
 
 
-	/**OJO ADRIAN...  TEÑO QUE CONTROLAR QUE EXISTA value ? dese tipo (ENTENDO QUE NON) **/
-	/** SE SI --> crear funcion int/bool dual_isValidValue(twcsa *g, int type, uint value);
-	 **           que mire o rango no vocabulario de 
-	 * 			                predicados [1,ns]
-	 * 			                SPO ou OPS (indistinto): sujetos [1,ns], objetos [gapobjects, gapobjects+no-1] ?
-	 **/ 
+	//  //** cuando a leap se le pide el primer valor de un tipo, se le pasaba un "value = 1", 
+	//  //** pero 1 no es un ID de objeto válido  --> si pasan un value <=gapobjects ==> convertimos value en 1+gapobjects.
+	//  
+	//  	//this if is no longer needed because the caller to leap_dual() will either call:
+	//  	//   - value  = leap_dual(iterator, type, min_of_type_dual(iterator,type)), the first time
+	//  	//   - value' = leap_dual(iterator, type, value) the remaining times.
+	//
+	//  
+    //  ** solucionado 2023.02.09 -- ahora el primer leap de un tipo pasa el valor inicial
+    //                        value = min_of_type_dual(iterator, type);
+    //						  i.e, 1 para SUBJECTS y PREDICATES; y  1+1+dualrdf->spo->gapobjects para OBJETOS.
 
-	if ((type ==OBJECT) && (value <= dualrdf->spo->gapobjects)) value = 1+dualrdf->spo->gapobjects;
-	if (! dual_isValidValue_for_Type_in_Input(dualrdf->spo,type,value)) return 0;
+	
+/** AINDA ASÍ, pode ser que haxa un suxeito 1000 (ou 1) que non é obxecto válido, 
+ *  pero co que chamamos a leap(object,1000 (ou 1) ) -->
+ **/
+    
+/** solution 1 **/	// A DE sempre, se leap con valor < 1st valido ==> hacer value = 1st válido.
+	  	if ((type ==OBJECT) && (value <= dualrdf->spo->gapobjects)) value = 1+dualrdf->spo->gapobjects;
+
+/** solution 2 **/
+    /** pode ser que haxa un suxeito 1000 (ou 1) que non é obxecto válido, pero co que chamamos a leap(object,1000 (ou 1) ) -->
+     * --> neste caso chegaría con facer 1+gapobjects = leap(object,1000 (ou 1) ); e así xa facemos que o leap() acabe sen 
+     *     facer os 2 selects, nin comece a fase de búsqueda (que fallará ao principio e xa nin fai a búsqueda binaria)
+     
+	if ((type ==OBJECT) && (value <= dualrdf->spo->gapobjects)) {
+		//fprintf(stderr,"\nLEAP for object with ID %u which is not >= %u\n",value,1+dualrdf->spo->gapobjects);
+		
+			it->estado_leap_type    = NO_TYPE_SET_OPS;
+					 
+		return 1+dualrdf->spo->gapobjects;
+		}
+
+    ** ISTO DEBERÍA FUNCIONAR, PERO ainda que os resultados eran os mesmos, daba algún warning no HuffmanRle3R.c durante execución.
+    **                        "should not be here!! @getfindPsiR3HValue... exiting"
+    **                        !! ASÍ QUE OPTAMOS POR solution 1 
+**/
+	//if (! dual_isValidValue_for_Type_in_Input(dualrdf->spo,type,value)) return 0;
+	if (! dual_isValidValue_for_Type_in_Input_Matrix(dualrdf->RANGEVALID,type,value)) return 0;
 	
 	/****/
 	
@@ -572,12 +756,14 @@ uint leap_dual(void *iterator, int type, uint value) {
 		//2. recovers the x=leap() value, and x>0 it also shortens the source interval (increases the left of the range)
 					ulong longleft = *left;  		//TRICK-ini : copies *left (32bit value) to a ulong (64bit) variable "longleft"
 
-/** 	retval = dual_searchPsiTarget_to_leap (dualrdf->spo, &longleft, (ulong) right, tl,tr);  */
+	if ( (it->estado_leap_type ==type) && (it->estado_leap_value < value)) longleft =it->estado_leap_leftpos;
+	
 		retval = dual_searchPsiTarget_to_leap ( g,           &longleft, (ulong) right, tl,tr);  
-
-					//*left = longleft;	     		//TRICK-ends: restores posibly modified *left from the ulong variable "longleft"
-				
-		//recall that if retval>0 then "left" = (range[0] ir range [2]) was also updated (actually increased)..	
+		//				*left = longleft;	     		//TRICK-ends: restores posibly modified *left from the ulong variable "longleft"
+		
+	it->estado_leap_leftpos = longleft;
+					
+		//recall that if retval>0 then "left" = (range[0] or range [2]) was also updated (actually increased)..	
 		return retval;
 				
 	}
@@ -634,12 +820,17 @@ uint leap_dual(void *iterator, int type, uint value) {
 
 			//2. recovers the x=leap() value, and x>0 it also shortens the source interval (increases the left of the range)
 						ulong longleft = *left;  		//TRICK-ini : copies *left (32bit value) to a ulong (64bit) variable "longleft"
-	   /** retval = dual_searchPsiPsiTarget_to_leap (dualrdf->spo, &longleft, (ulong) right, tl,tr);  **/
+
+	if ( (it->estado_leap_type ==type) && (it->estado_leap_value < value)) longleft =it->estado_leap_leftpos;
+
 		   retval = dual_searchPsiPsiTarget_to_leap ( g,           &longleft, (ulong) right, tl,tr);  
 			
-					//	*left = longleft;	     		//TRICK-ends: restores posibly modified *left from the ulong variable "longleft"
+	//					*left = longleft;	     		//TRICK-ends: restores posibly modified *left from the ulong variable "longleft"
 					
 			//recall that if retval>0 then "left" = (range[0] ir range [2]) was also updated (actually increased)..	
+
+	it->estado_leap_leftpos = longleft;
+
 			
 			return retval;
 	}
@@ -667,6 +858,11 @@ int down_dual(void *iterator, int type, uint value){       //numfijadas ++ e act
 	t_iterator *it = (t_iterator *) iterator;
 	tdualrdfcsa *dualrdf = (tdualrdfcsa *) it->dualrdfcsa;	
 	//size_t n = dualrdf->spo->n;          //numberofTriples
+
+//	it->estado_leap_type    = NO_TYPE_SET_OPS;
+//	it->estado_leap_value  	= 1; //none
+//	it->estado_leap_leftpos	= 0; //none
+
 	
 		uint *left;  uint *right;   //source range for fixed variable according to it->range[...]
 		ulong tl, tr; 			    //target range for "value" of type "type" 
@@ -750,6 +946,10 @@ int down_dual(void *iterator, int type, uint value){       //numfijadas ++ e act
 			//2. now we shorten the source interval 
 					ulong longleft = *left;  		//TRICK-ini : copies *left  (32bit value) to a ulong (64bit) variable "longleft"
 					ulong longright = *right;  		//TRICK-ini : copies *right (32bit value) to a ulong (64bit) variable "longright"
+					
+		//2023.02.07: reuses state from previous leap(), seems to work fine (2023.02.07)
+		longleft = it->estado_leap_leftpos;		 
+		
 		/** retval = dual_searchPsiTarget_to_down (dualrdf->spo, &longleft, &longright, tl,tr);  */
 		retval = dual_searchPsiTarget_to_down (g, &longleft, &longright, tl,tr);  
 					*left  = longleft;	     		//TRICK-ends: restores ??modified?? *left from the ulong variable "longleft"
@@ -800,17 +1000,23 @@ int up_dual(void *iterator) {                           //numfijadas -- e actual
 	//		it->nFixed =2;
 	//	}
 
-
+	#ifndef NDEBUG 
 	/* borrar esto para experimentos*/	if (it->nFixed == 0) {  
 	/* borrar esto para experimentos*/		/*TO-COMMENT*/
 	/* borrar esto para experimentos*/		printf("\n UPS!: alguien ha llamado a up() con 0 variables fijadas \n"); exit(0);
 	/* borrar esto para experimentos*/	}
+	#endif	
 	
 	if (it->nFixed ==2) {
 		memcpy(it->range, it->range_backup, 4*sizeof(uint)); 
 	}	
 	
 	it->nFixed--;
+
+	it->estado_leap_type    = NO_TYPE_SET_OPS;
+	it->estado_leap_value  	= 1; //none
+	it->estado_leap_leftpos	= 0; //none
+	
 	return 0;
 }
 
@@ -868,7 +1074,9 @@ std::vector <uint> get_all_dual (void *iterator, int type) {
 
 	std::vector <uint> res;
 
+#ifndef NDEBUG
 /* borrar esto para experimentos*/	if (iterator ==NULL) return res;
+#endif
 
 	t_iterator *it = (t_iterator *) iterator;
 	tdualrdfcsa *dualrdf = (tdualrdfcsa *) it->dualrdfcsa;
@@ -919,14 +1127,17 @@ std::vector <uint> get_all_dual (void *iterator, int type) {
 			}
 		}
 
-
+#ifndef NDEBUG
 	/* borrar esto para experimentos*/		if (type != expectedtype) {
 	/* borrar esto para experimentos*/			printf("\n This should not happen in get_all_dual:");
 	/* borrar esto para experimentos*/			printf("\n  type =%d but expected type = %u\n",type,expectedtype); exit(0);
+												printIterator_dual(iterator);
 	/* borrar esto para experimentos*/		}
+#endif
 
 		uint *bufferpsi = (uint *) my_malloc(sizeof(uint) * (right-left+1));
 		getPsiBuffericsa(g->myicsa,bufferpsi,left,right);   //values of Psi(i) for i \in [left,right]
+		//printf("\n len= %u", (uint) (right-left+1));
 		
 		uint i;
 		uint pos; uint value;
@@ -951,6 +1162,134 @@ std::vector <uint> get_all_dual (void *iterator, int type) {
 	//        un vector sen facer ningún push_back();
 }
 
+
+//inicializa recuperación de todos los IDS del tipo "type" del elemento "no fijado" asociado al iterador
+//para ir devolviendo elementos como en get_all_dual(), pero de 1 en 1 en get_one_dual_next().
+//returns -1 if no 2 variables are fixed ==> get_one_dual_next() should not be called.
+int get_one_dual_init (void *iterator, int type) {
+	t_iterator *it = (t_iterator *) iterator;
+	tdualrdfcsa *dualrdf = (tdualrdfcsa *) it->dualrdfcsa;
+	//size_t n = dualrdf->spo->n;          //numberofTriples	
+	
+	if (it->nFixed ==2) {
+		twcsa *g;
+		ulong left, right;
+		uint expectedtype;
+
+		if(it->typeFixed[0]==SUBJECT) {
+			if (it->typeFixed[1]==PREDICATE) {
+					/**/ //usar dualrdf->spo para buscar OBJETO "value": salto (S-P ->O) 
+					g=dualrdf->spo;
+					left = it->range[0]; right = it->range[1];	expectedtype = OBJECT;
+			}
+			else { //it->typeFixed[1]==OBJECT
+					/**/ //usar dualrdf->ops para buscar PREDICADO "value": salto (S-O ->P) 
+					g=dualrdf->ops;
+					left = it->range[2]; right = it->range[3]; 	expectedtype = PREDICATE;										
+			}				
+		}		
+
+		else
+		if(it->typeFixed[0] ==PREDICATE) {
+			if (it->typeFixed[1]==SUBJECT) {
+					/**/ //usar dualrdf->ops para buscar OBJETO "value": salto (P-S ->O) 
+					g=dualrdf->ops;
+					left = it->range[2]; right = it->range[3];	expectedtype = OBJECT;
+			}
+			else { //it->typeFixed[1]==OBJECT
+					/**/ //usar dualrdf->spo para buscar SUBJECT "value": salto (P-O ->S) 
+					g=dualrdf->spo;
+					left = it->range[0]; right = it->range[1];	expectedtype = SUBJECT;	
+			}				
+		}		
+
+		else {  //it->typeFixed[0] == OBJECT
+			if (it->typeFixed[1]==SUBJECT) {
+					/**/ //usar dualrdf->spo para buscar SUJETO "value": salto (O-S ->P) 
+					g=dualrdf->spo;
+					left = it->range[0]; right = it->range[1];	expectedtype = PREDICATE;
+			}
+			else {  //it->typeFixed[1]==PREDICATE
+					/**/ //usar dualrdf->ops para buscar PREDICADO "value": salto (O-P ->S) 
+					g=dualrdf->ops;
+					left = it->range[2]; right = it->range[3];	expectedtype = SUBJECT;
+			}
+		}
+
+			#ifndef NDEBUG
+				/* borrar esto para experimentos*/		if (type != expectedtype) {
+				/* borrar esto para experimentos*/			printf("\n This should not happen in get_all_dual:");
+				/* borrar esto para experimentos*/			printf("\n  type =%d but expected type = %u\n",type,expectedtype); exit(0);
+															printIterator_dual(iterator);
+				/* borrar esto para experimentos*/		}
+			#endif
+
+		//it->left = left;
+		//it->right = right;
+		it->IDtype = type;
+		it->active_g = g;
+		
+		//if (!it->buffer) {
+		//	uint tpsi=getTPSI_value(g->myicsa);
+		//	it->buffer = (uint *) malloc (tpsi * sizeof(uint));
+		//}
+
+		//uint tpsi=getTPSI_value(g->myicsa);
+		if (!it->iter_psi) {
+			it->iter_psi =  new psi_rep_iterator();
+		}		
+
+		((psi_rep_iterator *)it->iter_psi) -> init(g->myicsa, left, right, it->tpsi);
+				
+			/*		twcsa *g = (twcsa *) it->active_g;
+					uint *bufferpsi = (uint *) my_malloc(sizeof(uint) * (right-left+1));
+					getPsiBuffericsa(g->myicsa,bufferpsi,left,right);   //values of Psi(i) for i \in [left,right]
+					
+					uint i;
+					uint pos; uint value;
+					for (i=left; i<=right; i++) {
+						pos=bufferpsi[i-left];
+						pos = getPsiicsa(g->myicsa,pos);         //** now l,r is 2 ranges before than expectedtype --> pos = \psi(\psi(i-left))
+						value = getRankicsa(g->myicsa,pos) -1;
+						value = unmapID(g, value, type);
+						
+						res.push_back( value );			
+					}
+					free(bufferpsi);
+			*/
+		return 0;
+	}	
+	return -1;
+}
+//recupera el siguiente ID del rango "no fijado" en el iterador. 
+//devuelve ID=0 cuando no quedan más elementos por devolver.
+uint get_one_dual_next (void *iterator) {
+	t_iterator *it = (t_iterator *) iterator;
+	twcsa *g = (twcsa *) it->active_g;
+	psi_rep_iterator *psi_it = (psi_rep_iterator *)it->iter_psi ;
+	
+	uint pos = psi_it -> next();
+	
+	if (pos != NO_MORE_VALUES_IN_PSI_RANGE) {
+		uint value;
+		pos = getPsiicsa(g->myicsa,pos);         //** now l,r is 2 ranges before than expectedtype --> pos = \psi(\psi(i-left))
+		value = getRankicsa(g->myicsa,pos) -1;
+				value = unmapID(g, value, it->IDtype);	
+		return value;
+	}
+	
+	return 0;
+}
+
+
+
+
+
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 //  //  Dado un iterador que tiene 2 variables fijadas (is_last_level() devolvería 1).
@@ -1109,6 +1448,9 @@ char * describeSourceFileType(int type) {
 }
 
 
+
+
+
 /* creates first the spo permutation and the reutilizes s to create the ops permutation index */
 int build_index_dual (const char *filename,char *build_options, void **index) {      
 //int build_index_dual (struct graphDB *graph, char *build_options, void **index)  {
@@ -1129,7 +1471,12 @@ int build_index_dual (const char *filename,char *build_options, void **index) {
 	else {	parseFileADRIANformat_IntoGraph(filename,&graph);     /****************/
 		printf("\n parsing pending ... exitting \n"); //exit(0);
 	}
-	
+
+
+	uint psitypes[3], psitypes_ops[3];
+	parametersFacade(psitypes,psitypes_ops, build_options);
+	char buildopts[10000];
+			
 	
 	tdualrdfcsa *dualrdf;
 	dualrdf = (tdualrdfcsa *) my_malloc (sizeof (tdualrdfcsa) * 1);
@@ -1155,8 +1502,11 @@ int build_index_dual (const char *filename,char *build_options, void **index) {
     //------------- 
  
  
+	sprintf(buildopts,"%s; psitypeR1R2R3=%u%u%u",build_options,psitypes[0],psitypes[1],psitypes[2]);
+ 
 	//builds permutation spo
-	build_index_from_graph (&graph, build_options,  (void **) &dualrdf->spo); 		
+//	build_index_from_graph (&graph, build_options,  (void **) &dualrdf->spo); 		
+	build_index_from_graph (&graph, buildopts,  (void **) &dualrdf->spo); 		
 
 
 	//restores graph-> and sets new gaps2
@@ -1174,7 +1524,10 @@ int build_index_dual (const char *filename,char *build_options, void **index) {
 		}
         //we reuse the same "build_index", and therefore, gaps [0,1,2] are offset for objects, predicates and subjects.
         //in the rdfcsa with ops permutation.
-	build_index_from_graph (&graph, build_options,  (void **) &dualrdf->ops); 	
+
+	sprintf(buildopts,"%s; psitypeR1R2R3=%u%u%u",build_options,psitypes_ops[0],psitypes_ops[1],psitypes_ops[2]);
+	//build_index_from_graph (&graph, build_options,  (void **) &dualrdf->ops); 	
+	build_index_from_graph (&graph, buildopts,  (void **) &dualrdf->ops); 	
 	
 		//now updates wcsaops->gaps so that gaps [0,1,2] are respectively the offsets to subjects, predicates and objects.
 		//this enables using a unique mapID and unmapID both for spo and ops rdfcsa's
@@ -1199,6 +1552,8 @@ int build_index_dual (const char *filename,char *build_options, void **index) {
 
 	
 	//>> save_index () properly saves this last "gaps[] array" for the ops-rdfcsa. 
+
+	dual_initRangeValid_for_Type_in_Input(dualrdf); //initializes dualrdf->RANGEVALID
 		
 	*index = dualrdf;
 	return 0;
@@ -1229,6 +1584,8 @@ int load_index_dual (const char *filename, void **index) {
 	
 	load_index (dualbasename(filename), (void **) &dualrdf->ops);
 	dualrdf->ops->is_in_spo_order = 0;  //
+
+	dual_initRangeValid_for_Type_in_Input(dualrdf); //initializes dualrdf->RANGEVALID
 	
 	*index = dualrdf;
 	return 0;
@@ -1241,7 +1598,11 @@ int free_index_dual (void *index) {
 	tdualrdfcsa *dualrdf = (tdualrdfcsa *) index;
 	free_index ( (void *) dualrdf->spo);
 	free_index ( (void *) dualrdf->ops);
-	
+
+	//frees the matrix RANGEVALID.
+	free(dualrdf->RANGEVALID[0]);
+	free(dualrdf->RANGEVALID);
+		
 	my_free(dualrdf);
 	return 0;
 }
@@ -1308,12 +1669,12 @@ int testRecoverAndCompareSPO_OPS_dump(void *index) {
 	size_t   len1,   len2;
 
 	fflush(stderr);fflush(stdout);
-	printf("\n\n ------- INI: COMPARING SPO and OPS recovered sequences ---------\n");
+	printf("\n \t------- INI: COMPARING SPO and OPS recovered sequences ---------\n"); fflush(stdout);fflush(stderr);
 	dumpSourceData(dualrdf->spo, &data1, &len1);     	
 	dumpSourceDataOPS_to_SPO(dualrdf->ops, &data2, &len2);
 
 			
-	printf("\n len-spo = %zu, len-ops = %zu",len1,len2);
+	//printf("\n len-spo = %zu, len-ops = %zu",len1,len2);
 	size_t i;
 	for (i=0; i< len1; i++) {
 		if (data1[i] != data2[i]) {
@@ -1322,12 +1683,12 @@ int testRecoverAndCompareSPO_OPS_dump(void *index) {
 		}
 	}
 	if (i==len1) {
-		printf("\n \t **** SPO and OPS->SPO sequences are identical: %zu uints *** \n",len1);
+		printf("\n \t **** SPO and OPS->SPO sequences are identical: %zu uints *** ",len1);
 		printf("\n \t\tSPO.data[0..6] = <%u, %u,%u><%u,%u,%u>", data1[0],data1[1],data1[2],data1[3],data1[4],data1[5]);
 		printf("\n \t\tOPS-shifted-SPO.data[0..6] = <%u, %u,%u><%u,%u,%u>", data2[0],data2[1],data2[2],data2[3],data2[4],data2[5]);
 		printf("\n \t\tthe above data1 and data2 should be identical :D\n");
 	}
-	printf("\n\n ------- END: COMPARING SPO and OPS recovered sequences ---------\n");
+	printf("\n \t------- END: COMPARING SPO and OPS recovered sequences ---------\n");
 	fflush(stderr);fflush(stdout); 
 	free(data1); free(data2);
 	
@@ -1454,9 +1815,13 @@ int build_index (char *filename, char *build_options, void **index) {
 	else {	parseFileADRIANformat_IntoGraph(filename,&graph);     /****************/
 		printf("\n parsing pending ... exitting \n"); exit(0);
 	}
-
-
-	returnvalue = build_index_from_graph (&graph,build_options, index);
+	
+	uint psitypes[3], psitypes_ops[3];
+	parametersFacade(psitypes,psitypes_ops, build_options);
+	char buildopts[10000];
+	sprintf(buildopts,"%s; psitypeR1R2R3=%u%u%u",build_options,psitypes[0],psitypes[1],psitypes[2]);
+	//returnvalue = build_index_from_graph (&graph,build_options, index);
+	returnvalue = build_index_from_graph (&graph,buildopts, index);
     return returnvalue;  
 }
 
@@ -1614,28 +1979,19 @@ int printInfo(void *index) {
 	if (err!=0) return err;
 	err = sizeIntIndex(wcsa->myicsa, &intIndexSize); 	
 	if (err!=0) return err;
+
 	
 		printf("\n   Vocabulary info -----");
-//		printf("\n      Num entries in map[]   (map_size)  = %zu",(size_t) wcsa->map_size);
-//		printf("\n      Num entries in unmap[] (zeronode)  = %zu",(size_t) wcsa->zeronode);
-
-//		printf("\n        vocabulary unmap size (zeronode*4)  =   %zu bytes",(size_t) wcsa->zeronode * sizeof(uint));
-//		printf("\n        vocabulary map[] size <as uints>    =   %zu bytes",(size_t) (wcsa->zeronode + wcsa->map_size)*sizeof(uint) );
-		
-//		printf("\n   -----");
-//		printf("\n   ");
-
-
 		printf("\n   wcsa structure = %zu bytes", (size_t) sizeof(twcsa));
 		printf("\n   no map[]/unmap[] structures needed (no vocabulary/permutation stored)");
 
-		printf("\n\n @@ Summary of self-index on Integers:");
-		err = printInfoIntIndex(wcsa->myicsa, " ");
+		printf("\n   @@ Summary of self-index on Integers:");
+		err = printInfoIntIndex(wcsa->myicsa, "        ");
 		if (err!=0) return err;
  			
-		printf("\n ========================================================:");		
-		printf("\n ** TOTAL SIZE IN MEMORY WHOLE STRUCTURE= %zu bytes **", (size_t) indexSize);
-		printf("\n ========================================================:");		
+		printf("\n   ========================================================:");		
+		printf("\n   ** TOTAL SIZE IN MEMORY WHOLE STRUCTURE= %zu bytes **", (size_t) indexSize);
+		printf("\n   ========================================================:");		
 		printf("\n\n");
 		return 0;
 	}
@@ -1837,8 +2193,8 @@ twcsa *loadWCSA(const char *filename) {
 
 	int err = loadIntIndex(filename, (void **)&wcsa->myicsa);
 	
-	int sel = getSelecticsa(wcsa->myicsa, 2822333);	
-	printf("got sel = %d\n", sel);
+	//int sel = getSelecticsa(wcsa->myicsa, 2822333);	
+	//printf("got sel = %d\n", sel);
 	loadStructs(wcsa,filename);   									  
 
 	return wcsa;
@@ -2084,7 +2440,7 @@ void dumpSourceDataOPS_to_SPO(twcsa *wcsa, uint **data, size_t *len){
 
 // dual 2023--
 // for a given position "pos" within 0..3n-1, returns its type  (for a rdfcsa in SPO order)
-uint typeFromPos_SPO(size_t pos, size_t n) {
+inline uint typeFromPos_SPO(size_t pos, size_t n) {
 	//s \in [0,n-1], p \in [0,2n-1], o \in [2n,3n-1]
 	if (pos < n)        return SUBJECT;
 	else if (pos < 2*n) return PREDICATE;	
@@ -2092,7 +2448,7 @@ uint typeFromPos_SPO(size_t pos, size_t n) {
 }
 
 // for a given position "pos" within 0..3n-1, returns its type  (for a rdfcsa in OPS order)
-uint typeFromPos_OPS(size_t pos, size_t n) {
+inline uint typeFromPos_OPS(size_t pos, size_t n) {
 	//o \in [0,n-1], p \in [0,2n-1], s \in [2n,3n-1]
 	if (pos < n)        return OBJECT;
 	else if (pos < 2*n) return PREDICATE;	
@@ -2100,7 +2456,7 @@ uint typeFromPos_OPS(size_t pos, size_t n) {
 }
 
 // for a given position "pos" within 0..3n-1, returns its actual value (for a rdfcsa in SPO order)
-uint valueFromPos_SPO(twcsa *g, size_t pos) {
+inline uint valueFromPos_SPO(twcsa *g, size_t pos) {
 	//s \in [0,n-1], p \in [0,2n-1], o \in [2n,3n-1]
 	size_t n = g->n;
 	uint tipo = typeFromPos_SPO( pos, n);
@@ -2111,7 +2467,7 @@ uint valueFromPos_SPO(twcsa *g, size_t pos) {
 }
 
 // for a given position "pos" within 0..3n-1, returns its actual value  (for a rdfcsa in OPS order)
-uint valueFromPos_OPS(twcsa *g, size_t pos){
+inline uint valueFromPos_OPS(twcsa *g, size_t pos){
 	//o \in [0,n-1], p \in [0,2n-1], s \in [2n,3n-1]
 	size_t n = g->n;
 	uint tipo = typeFromPos_OPS( pos, n);
@@ -2194,7 +2550,7 @@ uint dual_typeFromPos(twcsa *g, size_t pos){
 
 // for a given position "pos" within 0..3n-1, returns its actual value 
 // allows g to be either a twcsa in spo- or ops-order
-uint dual_valueFromPos(twcsa *g, size_t pos){
+inline uint dual_valueFromPos(twcsa *g, size_t pos){
 	if (g->is_in_spo_order) 
 		return  valueFromPos_SPO(g, pos);
 
@@ -2229,26 +2585,63 @@ uint * dual_printTriple(twcsa *g, size_t pos) {
 
 
 
+
 //*********************************************************************************
 //Computes the 1st position i in [left,right] such that \Psi[i] \in in [tl,rt].
 //Returns: 
 //   0 if no i \in [left,right] maps into [tl,tr]
 //   Otherwise: 
-//		- Computes x=Psi[i]. 
 //		- Updates *left =i;
+//		- Computes x=Psi[i]. 
 //		- Returns dual_valueFromPos(g,x);
 //
+
+#define PSI_LEFTONLY   //uncomment this to use the new expSearchPsiTarget_leftOnly_samplesFirst()
+					   //    which returns both *left and the value Psi(*left) as "numocc-1"
+                       //comment to use binSearchPsiTarget_samplesFirst + a Psi() computation.
+
 uint dual_searchPsiTarget_to_leap(twcsa *g, ulong *left, ulong right, ulong tl, ulong tr) {
 	ulong l=*left;
 	ulong r=right;
 	ulong numocc;
-	binSearchPsiTarget_samplesFirst(g->myicsa,&l,&r,&numocc, tl, tr);
+
+				// ulong ll=l,rr=r;
+				// expSearchPsiTarget(g->myicsa,&ll,&rr,&numocc, tl, tr);
+				// 
+				// ulong lll=l, rrr=r;  ulong numocc2;
+				// expSearchPsiTarget_leftOnly_samplesFirst(g->myicsa, &lll,&rrr, &numocc2, tl, tr);
+				// 
+				// 	binSearchPsiTarget_samplesFirst(g->myicsa,&l,&r,&numocc, tl, tr);
+				// 
+				// if (numocc && ll!=l) {printf("\n PsiTarget:: bin search= [%lu,%lu], exp-search = [%lu,%lu] within [%lu,%lu]]\n",l,r,ll,rr,*left, right); exit(0);} 
+				// if (numocc && rr!=r) {printf("\n PsiTarget:: bin search= [%lu,%lu], exp-search = [%lu,%lu] within [%lu,%lu]]\n",l,r,ll,rr,*left, right); exit(0);} 
+				// 
+				// if (numocc2 && lll!=l) {printf("\n PsiTarget:: bin search= [%lu,%lu], exp-searchLEFT-ONLY = [%lu,??] within [%lu,%lu]]\n",l,r,lll,*left, right); exit(0);} 
+
+
+
+	// TO USE ONLY LEFT-ONLY with bin Search, comment "#define WITHEXPSEARCH3 " at icsa.c.
+	
+	#ifdef PSI_LEFTONLY
+	   expSearchPsiTarget_leftOnly_samplesFirst(g->myicsa,&l,&r,&numocc, tl, tr);
+	#else
+	 binSearchPsiTarget_samplesFirst         (g->myicsa,&l,&r,&numocc, tl, tr);
+	#endif
+	
+	
 	if (numocc) {  
 		*left = l; //updates only *left   (right is not modified) 
+
+	#ifdef PSI_LEFTONLY     // x is already returned as numocc -1
+		ulong x= numocc-1;  // sustracts 1 because "we added +1 at expSearchPsiTarget_leftOnly_samplesFirst() to 
+							//							ensure psi=0 was not returned as a valid value in numocc".
+	#else
 		ulong x = getPsiicsa(g->myicsa,l);
+	#endif
+
 		uint ret = dual_valueFromPos(g,x); //the value at *left :D 
 										   // could also be returned by a creating a modified 
-										   // binSearchPsiTarget_samplesFirst - variant. TO-DO
+										   // expSearchPsiTarget_leftOnly_samplesFirst - variant. TO-DO
 										   // that also computes it (so we avoid the call to getPsiicsa() above)
 		return ret;
 	}
@@ -2256,15 +2649,45 @@ uint dual_searchPsiTarget_to_leap(twcsa *g, ulong *left, ulong right, ulong tl, 
 }
 
 
+
+#define PSIPSI_LEFTONLY
 uint dual_searchPsiPsiTarget_to_leap(twcsa *g, ulong *left, ulong right, ulong tl, ulong tr) {
 	ulong l=*left;
 	ulong r=right;
 	ulong numocc;
-	binSearchPsiPsiTarget(g->myicsa,&l,&r,&numocc, tl, tr);
+
+
+ulong ll=l,rr=r;
+
+	
+	
+// TO USE ONLY LEFT-ONLY with bin Search, comment "#define WITHEXPSEARCH_PSIPSITARGET3 " at icsa.c.  /DEFAULT because exp search is very slow here!!!
+
+	
+	#ifdef PSIPSI_LEFTONLY	
+					//	binSearchPsiPsiTarget(g->myicsa,&ll,&rr,&numocc, tl, tr);
+		expSearchPsiPsiTarget_leftOnly(g->myicsa,&l,&r,&numocc, tl, tr);  
+	#else
+		binSearchPsiPsiTarget(g->myicsa,&l,&r,&numocc, tl, tr);
+		//	//expSearchPsiPsiTarget(g->myicsa,&ll,&rr,&numocc, tl, tr);  //más lento que binSearch
+	#endif	
+	
+	
+	
+				//if (numocc && ll!=l) {printf("\n PsiPsiTarget:: bin search= [%lu,%lu], exp-search = [%lu,%lu] within [%lu,%lu]]\n",l,r,ll,rr,*left, right); exit(0);} 
+				//if (numocc && rr!=r) {printf("\n PsiPsiTarget:: bin search= [%lu,%lu], exp-search = [%lu,%lu] within [%lu,%lu]]\n",l,r,ll,rr,*left, right); exit(0);}
+
+	
 	if (numocc) {  
 		*left = l; //updates only *left   (right is not modified) 
+
+	#ifdef PSIPSI_LEFTONLY	// x is already returned as numocc -1		
+		ulong x=numocc-1;  // sustracts 1 because "we added +1 at expSearchPsiPsiTarget_leftOnly() to ensure psi=0 was not returned as a valid value".
+	#else
 		ulong x = getPsiicsa(g->myicsa,l);
 		      x = getPsiicsa(g->myicsa,x);
+	#endif
+	
 		uint ret = dual_valueFromPos(g,x); //the value at *left :D 
 										   // could also be returned by a modified 
 										   // binSearchPsiPsiTarget  ??
@@ -2278,21 +2701,36 @@ uint dual_searchPsiPsiTarget_to_leap(twcsa *g, ulong *left, ulong right, ulong t
 //*********************************************************************************
 //Computes the positions i in [left,right] such that forall i, \Psi[i] \in in [tl,rt].
 //		- Updates *left  and *right is updated
-//		- Then updates *left = getPsiValue( *left), and *right = getPsiValue (*right).  <-- no
 int dual_searchPsiTarget_to_down(twcsa *g, ulong *left, ulong *right, ulong tl, ulong tr) {
 	ulong l=*left;
 	ulong numocc;
 //	printf("\n left = %lu, right = %lu",*left, *right);
-	binSearchPsiTarget_samplesFirst(g->myicsa,left,right,&numocc,tl,tr);
-//	printf("\n left = %lu, right = %lu",*left, *right);
 	
-	//if (*left != l) {
-	//	printf("\n buildFacade.c dual_searchPsiTarget_to_down():: LEFT HA CAMBIADO Y NO DEBERIA: (viejo) %lu != %lu (nuevo)\n",l, *left);
-	//}
+
+	/**BIN SEARCH- UNCOMMENT THIS **/	
+		////	binSearchPsiTarget_samplesFirst(g->myicsa,left,right,&numocc,tl,tr);
+
+
+		
+		// To have binary search --> 
+		/** comment #define WITHEXPSEARCH1 and #define WITHEXPSEARCH2 at icsa.c**/
+
+		// To have exponential search
+		/** uncomment #define WITHEXPSEARCH1 and #define WITHEXPSEARCH2 at icsa.c**/
 	
-//	*left  = getPsiicsa(g->myicsa, *left);
-//	*right = getPsiicsa(g->myicsa,*right);
-//	printf("\n PSI left = %lu, right = %lu",*left, *right);
+	expSearchPsiTarget_samplesFirst(g->myicsa,left,right,&numocc,tl,tr);   /** 2023.02.07 - version 9 **/
+	
+	
+	
+					//	printf("\n left = %lu, right = %lu",*left, *right);
+						
+					//	if (*left != l) {
+					//		printf("\n buildFacade.c dual_searchPsiTarget_to_down():: LEFT HA CAMBIADO Y NO DEBERIA: (viejo) %lu != %lu (nuevo)\n",l, *left);
+					//	}
+						
+					//	*left  = getPsiicsa(g->myicsa, *left);
+					//	*right = getPsiicsa(g->myicsa,*right);
+					//	printf("\n PSI left = %lu, right = %lu",*left, *right);
 
 	return 1;
 }
@@ -2423,7 +2861,45 @@ int dual_isValidValue_for_Type_in_Input(twcsa *g, int type, uint value){
 	return 0;	
 }
 
+//initializes dualrdfcsa->RANGEVALID[3][2]. 
+int dual_initRangeValid_for_Type_in_Input(tdualrdfcsa *dual){
+	
+	uint ns = dual->spo->ns;     ns--;   //skips dummie
+	uint np = dual->spo->np;     np--;   //skips dummie
+	uint no = dual->spo->no;     no--;   //skips dummie
+	uint gapobjects = dual->spo->gapobjects;
+	
+	ulong *data = (ulong *) malloc (3*2*sizeof(ulong));	
+	ulong **V = (ulong **) malloc (3*sizeof(ulong*));
+	int i;
+	for (i=0;i<3;i++) V[i] = &(data[i*2]);
+	
+	dual->RANGEVALID = V;
+	
+		dual->RANGEVALID[SUBJECT][0]=1;
+		dual->RANGEVALID[SUBJECT][1]=ns;
 
+		dual->RANGEVALID[PREDICATE][0]=1;
+		dual->RANGEVALID[PREDICATE][1]=np;
+
+		dual->RANGEVALID[OBJECT][0]=1+gapobjects;
+		dual->RANGEVALID[OBJECT][1]=gapobjects + no;
+
+//	free(dual->RANGEVALID[0]);
+//	free(dual->RANGEVALID);
+	return 0;	
+}
+
+/* simplified version of dual_isValidValue_for_Type_in_Input() that uses dual->RANGEVALID */
+inline int dual_isValidValue_for_Type_in_Input_Matrix(ulong** V, int type, uint value){
+	//V is matrix dualrdfcsa->RANGEVALID[3][2]
+	ulong l,r;
+	l=V[type][0];
+	r=V[type][1];
+	
+	if( (l<=value) && (r>=value)) return 1;
+	return 0;	
+}
 
 
 

@@ -23,18 +23,45 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
+
+
+/**
+ * rdfcsaLTJ/external/swcsa/BUILDALLDUALwcsa $DATADIR/$DATASET indexes/$DATASET.rdfcsa.psi16-HUFFRLE-default  "sourceFormat=ADRIAN;sPsi=16; nsHuff=16;psiSF=4; psitypespo=111, psitypeops=111" 
+ 
+	##CONSIDERATIONS FOR BUILDING INDEXES
+	##We are using rdfcsa with a 3-ranges configuration ==> 
+	##  Psi for subjects, predicates and objects are encoded independently
+	##
+	##Parameters: psitypespo=xyz; psitypeops=abc.
+	##  Use a 3digit number for xyz and abc. 
+	##    e.g. 123 (in xyz) means:
+	##         ----> 1 (HuffmanRle) for 1st range (eg. subjects).
+	##         ----> 2 (Plain)     for 2nd range (eg. predicates).
+	##         ----> 3 (PlainRle)  for 3rd range (eg. objects).
+	## Default option, if no "psitypespo=xyz; psitypeops=abc" options are
+	## provided, is xyz=111 and abc=111 (HuffmanRle for the 3 ranges).
+	## Indeed 111 = 000, and 000 is set to mark no psitypes??? where provided.
+
+**/
+
+
+
+
+
+
+
  
 /* General interface for using the compressed temporal graph */
 
-// #ifndef uchar
-// #define uchar unsigned char
-// #endif
-// #ifndef uint
-// #define uint unsigned int
-// #endif
-// #ifndef ulong
-// #define ulong unsigned long
-// #endif
+#ifndef uchar
+#define uchar unsigned char
+#endif
+#ifndef uint
+#define uint unsigned int
+#endif
+#ifndef ulong
+#define ulong unsigned long
+#endif
 
 
 //TYPE for use in mapID(id,type) and unmapID(id,type)   --> definido por agora en buildFacade.h
@@ -50,7 +77,13 @@
 		#define OBJECT (2)
 #endif
 
+#ifndef NO_TYPE_SET_OPS
+		#define NO_TYPE_SET_OPS (99)
+#endif
 
+
+#define NO_MORE_IDS_IN_BUFFER (0xFFFFFFFF)
+#define MAX_PSI_VALUE_FOR_BUFFER (16)
 
 
 
@@ -97,9 +130,30 @@ typedef struct {
 	
 	void *dualrdfcsa;
 
-	long estado_leap ; //= -1; to use in leap v2.0
+	uchar estado_leap_type   ; //= -1; to use in leap v2.0  --default 99 (no type is set)
+	uint  estado_leap_value  ; //= -1; to use in leap v2.0
+	uint  estado_leap_leftpos; //= -1; to use in leap v2.0
+	
+	//support for get_one_dual_init() and get_one_dual_next().
+	//uint *buffer;  //must be of sizemax tpsi value must be >= tpsi
+	void *active_g; // (set in get_one_dual_init())
+	void *iter_psi; // (set in get_one_dual_init())
+	uint tpsi;
+	uint IDtype;        //type of the IDS recovered (set in get_one_dual_init())
+	
+	//ulong left, right;  //we will recover IDS within range [left,right]. 
+	                    //left is moved forward each within get_one_dual_next()
+	
+	//uint pos;           //pos = Psi[i], i \in [left, right] 
 
 } t_iterator;
+
+
+
+//frees the memory associated to the iterador
+//returns NULL;
+//call it as: iter = destroyIterator_dual(iter);
+void * destroyIterator_dual(void *index);
 
 
 
@@ -171,8 +225,11 @@ int init_o_dual(void *iterator, uint o);
     //  1 si el rango inicializado no es vacío.
 	//	0 otherwise
 	
+
+// returns the 1st valid value for a given type
+uint min_of_type_dual(void *iterator, int type);
 	
-//...
+
 uint leap_dual(void *iterator, int type, uint value);
 	//type: indica se estamos a buscar nun s, p ou o
 	//buscamos no rango do iterator o primeiro valor de tipo (type) >= value
@@ -247,12 +304,26 @@ std::vector <uint> get_all_dual (void *iterator, int type);
 //}
 
 
+//inicializa recuperación de todos los IDS del tipo "type" del elemento "no fijado" asociado al iterador
+//para ir devolviendo elementos como en get_all_dual(), pero de 1 en 1 en get_one_dual_next().
+//returns -1 if no 2 variables are fixed ==> get_one_dual_next() should not be called.
+int get_one_dual_init (void *iterator, int type);
+//recupera el siguiente ID del rango "no fijado" en el iterador. 
+//devuelve ID=0 cuando no quedan más elementos por devolver.
+uint get_one_dual_next (void *iterator); 
+
+
+
+
+
+
 
 /** DEBUGGING ONLY see files ops_spo.cpp, ops_so.cpp, ops_sp.cpp, ops_op.cpp ops_s.cpp ops_o.cpp ops_p.cpp ********/
 void testAdrian(uint a, uint b);
 int dual_test_spo_ops(void *index, uint **res);
 int dual_test_so_os(void *index, uint **res, uint **res2) ;
 int dual_test_sp_ps(void *index, uint **res, uint **res2) ;
+int dual_test_sp_ps_TARGET_BIN_VS_FIRSTLEFT(void *index, uint **res, uint **res2);
 int dual_test_po_op(void *index, uint **res, uint **res2) ;
 int dual_test_s_s(void *index, uint **res, uint **res2);
 int dual_test_p_p(void *index, uint **res, uint **res2);
@@ -265,6 +336,7 @@ int dual_test_o_o(void *index, uint **res, uint **res2);
 uint dual_rdfcsaSPO_init_spo (void *gindex, int S, int P, int O, uint *left, uint *right) ;  // see ops_spo.cpp
 uint dual_rdfcsaOPS_init_so  (void *gindex, int S, int O, uint *left, uint *right) ;         // see ops_so.cpp
 uint dual_rdfcsaSPO_init_sp  (void *gindex, int S, int P, uint *left, uint *right) ;         // see ops_sp.cpp
+int dual_test_sp_ps_TARGET_BIN_VS_FIRSTLEFT(void *index, uint **res, uint **res2) ;         // see ops_sp.cpp
 uint dual_rdfcsaSPO_init_po  (void *gindex, int P, int O, uint *left, uint *right) ;         // see ops_po.cpp
 
 uint dual_rdfcsaSPO_init_s   (void *gindex, int S, uint *left, uint *right) ;         // see ops_s.cpp

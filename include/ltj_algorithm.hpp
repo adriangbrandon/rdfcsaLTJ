@@ -27,6 +27,7 @@
 #include <triple_pattern.hpp>
 #include <ltj_iterator.hpp>
 #include <gao_adaptive.hpp>
+#include <gao_simple.hpp>
 #include <rdfcsa_dual.hpp>
 
 namespace rdfcsa {
@@ -44,7 +45,11 @@ namespace rdfcsa {
         typedef std::unordered_map<var_type, std::vector<ltj_iter_type*>> var_to_iterators_type;
         typedef std::vector<std::pair<var_type, value_type>> tuple_type;
         typedef std::chrono::high_resolution_clock::time_point time_point_type;
+#if ADAPTIVE
         typedef gao::gao_adaptive<index_type, var_type, const_type> gao_type;
+#else
+        typedef gao::gao_simple<index_type, var_type, const_type> gao_type;
+#endif
 
     private:
         const std::vector<triple_pattern>* m_ptr_triple_patterns;
@@ -199,30 +204,23 @@ namespace rdfcsa {
                 std::vector<ltj_iter_type*>& itrs = m_var_to_iterators[x_j];
                 bool ok;
                 if(itrs.size() == 1 && itrs[0]->in_last_level()) {//Lonely variables
-
-                    auto results = itrs[0]->seek_all(x_j);
-#if VERBOSE
-                    std::cout << "Seek (all): (" << (uint64_t) x_j << ": " << results.size() << ")" <<std::endl;
-#endif
+                    value_type c = itrs[0]->seek_last(x_j);
+                    //auto results = itrs[0]->seek_all(x_j);
                     //std::cout << "Results: " << results.size() << std::endl;
-                    for (const auto &c : results) {
+                    //std::cout << "Seek (last level): (" << (uint64_t) x_j << ": size=" << results.size() << ")" <<std::endl;
+                    while (c != 0) { //If empty c=0
                         //1. Adding result to tuple
                         tuple[j] = {x_j, c};
                         //2. Going down in the trie by setting x_j = c (\mu(t_i) in paper)
-#if VERBOSE
-                        std::cout << "down(x_j=" << (uint64_t) x_j << " c=" << c << ")" << std::endl;
-#endif
                         itrs[0]->down(x_j, c);
                         m_gao.down();
                         //2. Search with the next variable x_{j+1}
                         ok = search(j + 1, tuple, res, start, limit_results, timeout_seconds);
                         if(!ok) return false;
-#if VERBOSE
-                        std::cout << "up(x_j=" << (uint64_t) x_j  << ")" << std::endl;
-#endif
                         //4. Going up in the trie by removing x_j = c
                         itrs[0]->up(x_j);
                         m_gao.up();
+                        c = itrs[0]->seek_last_next(x_j);
                     }
                 }else {
                     value_type c = seek(x_j);

@@ -61,7 +61,7 @@ HuffmanCompressedPsiR3 huffmanCompressPsiR3(unsigned int *Psi, size_t psiSize, s
 	cPsi.OFFSET = inioffset;
 	//printf("\n **************** offset = %zu ***************************************",inioffset);
 #endif	
-	size_t maxval3R = 0;               //required to now the max-value that must be used in the samples.
+	size_t maxval3R = 0;               //required to know the max-value that must be used in the samples.
 	
 	uint absolute_value;
 	register size_t index;
@@ -151,6 +151,16 @@ HuffmanCompressedPsiR3 huffmanCompressPsiR3(unsigned int *Psi, size_t psiSize, s
 	}
 		
 	if(runLenght) huffmanDst[runLenght+runLenghtStart]++;
+
+//  -SHOW THE FREQUENCY DISTRIBUTION OF THE SYMBOLS
+//	{int x;
+//		fflush(stderr);fflush(stdout);
+//		printf ("\n");
+//		for (x=0;x<nS;x++) {
+//				printf("\n Huff-freq [%3d] = %u",x,huffmanDst[x]);
+//		}
+//		printf ("\n");
+//	}
 	
 	// Creamos o arbol de Huffman
 	diffsHT = createHuff(huffmanDst,nS-1,UNSORTED);
@@ -1152,11 +1162,276 @@ int getfindHuffmanPsiR3Value(HuffmanCompressedPsiR3 *cPsi, size_t ini, size_t en
 }
 
 
+//different processing of the runs in getFindxx() below.
+//By default the OPT_A is faster than Option_B (rather unexpectedly: no long runs?)
+//set to OPT_A by default. Comment next line to set Option_B
+#define PSIHUFFMANRLE3R_RUNPROCESS_OPT_A
+
+//simulates decompression from ini to end, and during the process:
+// sets in i1 de position (from ini on) of the fst   value >= fst  and <=sec
+// stops if i1 was set
+// returns 0 if all values are < fst.
+   // NO LONGER returns 1 if a value >= fst and <=sec was found
+// returns x+1, where x is  the first value >= fst and <=sec was found    
+// (+1 to ensure zero is not returned as a valid value) --> we can distinghis from the case were non value found (and returns 0)
+
+ulong getfindLeftOnlyHuffmanPsiR3Value(HuffmanCompressedPsiR3 *cPsi, size_t ini, size_t end, ulong fst, ulong sec, ulong *i1) {
+	int count =0;
+	int toreturn=0;
+	
+	ulong fstt=fst;
+	ulong sect=sec;
+	
+	register size_t index;
+	size_t sampleIndex, positionsSinceSample, ptr;
+
+	unsigned int psiValue, absolute_value, huffmanCode; 
+	unsigned int binaryLenght, runLenght;
+	
+	unsigned int runLenghtStart = cPsi->nS - 64 - cPsi->T;
+	unsigned int negStart = cPsi->nS - 64;
+	unsigned int bigStart = cPsi->nS - 32;	
+
+	size_t position = ini;
+	sampleIndex = position / cPsi->T;
+	psiValue = bitread(cPsi->samples,sampleIndex*cPsi->sampleSize,cPsi->sampleSize);
+#ifdef 	R3H_WITHGAPS	
+			psiValue +=cPsi->OFFSET;
+#endif				
+	
+	ptr = bitread64(cPsi->samplePointers,sampleIndex*cPsi->pointerSize,cPsi->pointerSize);
+	
+	positionsSinceSample = position%cPsi->T;
+	
+	int inRun=0;//@@
+	int inRunRemain=0;//@@
+	
+	for(index=0;index<positionsSinceSample;index++) {
+		
+		ptr = decodeHuff(&cPsi->diffsHT,&huffmanCode,cPsi->stream,ptr);
+		
+		if(huffmanCode < runLenghtStart) { 	// Incremento directo
+			psiValue += huffmanCode;
+		}	
+		else 
+			if(huffmanCode < negStart) {	// Estamos nun run
+				runLenght = huffmanCode - runLenghtStart;
+				if(index+runLenght>=positionsSinceSample){
+					//return psiValue+positionsSinceSample-index;
+					psiValue = psiValue+ positionsSinceSample-index;
+					inRun=1;//@@
+					inRunRemain = runLenght + index-positionsSinceSample;//@@
+					break;
+				}					
+				else {
+					psiValue += runLenght;
+					index += runLenght-1;
+				}
+			}
+			else
+				if(huffmanCode < bigStart) {	// Negativo
+					binaryLenght = huffmanCode-negStart+1;
+					absolute_value = bitread(cPsi->stream,ptr,binaryLenght);
+					ptr += binaryLenght;
+					psiValue -= absolute_value;	
+				}
+				else {	// Grande
+					binaryLenght = huffmanCode-bigStart+1;
+					absolute_value = bitread(cPsi->stream,ptr,binaryLenght);
+					ptr += binaryLenght;
+					psiValue += absolute_value;				 
+				}				
+	}	
+	
+	
+	//*buffer++= psiValue;  //value psi(ini)
+	
+		{
+			if ((psiValue >=fstt)&& (psiValue <=sec)) {
+					*i1= count;   fstt = 0xFFFFFFFFFFFFFFF;
+					toreturn=1;
+					//return toreturn;  //////////////////////////////////////////////////////////77
+					return psiValue +1;  //////////////////////////////////////////////////////////77
+			}
+			//if ((psiValue >=fst)&& (psiValue <=sec)) {
+			//	*i2= count; 
+			//	toreturn=2;
+			//}
+			if (psiValue >=sec) {
+					return toreturn;
+			}
+			count ++;		
+		}
+	
+		//@@ //--- AVOIDS PROBLES IN RUN... BUG FIXED on 2014.11.20
+		if (inRun) {
+			int iters = ((end-ini) >inRunRemain)? inRunRemain: (end-ini);
+			ini+=iters;
+		
+#ifdef PSIHUFFMANRLE3R_RUNPROCESS_OPT_A
+/** option A **/	 //absolute_value/typically slightly faster with t_psi=16 (yet rather unexpectedly)
+					/*//fari@2023 */ while (iters>0) {		
+					/*//fari@2023 */ 	psiValue++;	
+					/*//fari@2023 */ 	//*buffer++= psiValue;
+					/*//fari@2023 */ 				{
+					/*//fari@2023 */ 					if ((psiValue >=fstt)&& (psiValue <=sec)) {
+					/*//fari@2023 */ 							*i1= count;   fstt = 0xFFFFFFFFFFFFFFF;
+					/*//fari@2023 */ 							toreturn=1;
+					/*//fari@2023 */							//return toreturn;  //////////////////////////////////////////////////////////
+					/*//fari@2023 */							return psiValue +1;  //////////////////////////////////////////////////////////
+					/*//fari@2023 */ 							
+					/*//fari@2023 */ 					}
+					/*//fari@2023 */ 					// if ((psiValue >=fst)&& (psiValue <=sec)) {
+					/*//fari@2023 */ 					// 	*i2= count; 
+					/*//fari@2023 */ 					// 	toreturn=2;
+					/*//fari@2023 */ 					// }
+					/*//fari@2023 */ 					if (psiValue >=sec) {
+					/*//fari@2023 */ 							return toreturn;
+					/*//fari@2023 */ 					}
+					/*//fari@2023 */ 					count ++;		
+					/*//fari@2023 */ 				}
+					/*//fari@2023 */ 	
+					/*//fari@2023 */ 	iters --;
+					/*//fari@2023 */ }
+#else					
+/** option B **/		//  NEXT WORKS, BUT DID NOT IMPROVED UPON THE PREVIOUS while !! :(	 //2023.02.05
+					/*fari@2023*/	uint gapToFst = fstt - psiValue;
+					/*fari@2023*/	if (psiValue < fstt) {
+					/*fari@2023*/		if (iters >=gapToFst) {*i1=gapToFst+count-1; return (1+ psiValue+gapToFst);}
+					/*fari@2023*/	}
+					/*fari@2023*/	psiValue +=iters;
+					/*fari@2023*/	count +=iters;
+#endif
+			
+		}
+		//@@
 
 
 
+/******** ESTA PARTE NO DEBERÍA HACER FALTA PUES NO BUSCAMOS RIGHT ********/
+	
+	size_t cpsiT = cPsi->T;	
+	for (position = ini+1; position <= end ;  ) {
+		if (!(position%cpsiT)){ // a sampled value
+			sampleIndex = position / cpsiT;
+			psiValue = bitread(cPsi->samples,sampleIndex*cPsi->sampleSize,cPsi->sampleSize);
+#ifdef 	R3H_WITHGAPS	
+			psiValue +=cPsi->OFFSET;
+#endif				
+			
+			//
+			//size_t ptrnew = bitread64(cPsi->samplePointers,sampleIndex*cPsi->pointerSize,cPsi->pointerSize);
+			//assert (ptr == ptrnew); //ptr is the same position as in the first loop
+			//if (ptr != ptrnew) {
+			//	printf("\n ptr = %lu and ptrnew = %lu do not match!\n", (ulong) ptr, (ulong) ptrnew);
+			//}
+		}
+		else {
+		
+			ptr = decodeHuff(&cPsi->diffsHT,&huffmanCode,cPsi->stream,ptr);
+			
+			if(huffmanCode < runLenghtStart) { 	// Incremento directo
+				psiValue += huffmanCode;
+			}	
+			else 
+				if(huffmanCode < negStart) {	// Estamos nun run
+					runLenght = huffmanCode - runLenghtStart;
+	/*				{uint l;
+						if (runLenght > (end-position)) 
+							runLenght = end-position;
+						for (l=0;l<runLenght;l++) {
+							psiValue++;
+							*buffer++=psiValue;							
+						}
+						position +=runLenght;
+						continue;   //skips the end of the loop (ten lines below)
+					}					 						
+					*/
+					
+					{uint l;
+						if (runLenght > (end-position)) 
+							runLenght = end-position+1;   //@corregido 2014.05.01 instead of "end-position" xD!
 
+#ifdef PSIHUFFMANRLE3R_RUNPROCESS_OPT_A
+/** option A **/	 //typically slightly faster with t_psi=16 (yet rather unexpectedly)							
+					 /*fari@2023 */	for (l=0;l<runLenght;l++) {
+					 /*fari@2023 */		psiValue++;
+					 /*fari@2023 */		//*buffer++=psiValue;		
+					 /*fari@2023 */	
+					 /*fari@2023 */			{
+					 /*fari@2023 */				if ((psiValue >=fstt)&& (psiValue <=sec)) {
+					 /*fari@2023 */						*i1= count;   fstt = 0xFFFFFFFFFFFFFFF;
+					 /*fari@2023 */						toreturn=1;
+					 /*fari@2023 */							//return toreturn;  //////////////////////////////////////////////////////////
+					 /*fari@2023 */							return psiValue+1;  //////////////////////////////////////////////////////////
+					 /*fari@2023 */				}
+					 /*fari@2023 */				//if ((psiValue >=fst)&& (psiValue <=sec)) {
+					 /*fari@2023 */				//	*i2= count; 
+					 /*fari@2023 */				//	toreturn=2;
+					 /*fari@2023 */				//}
+					 /*fari@2023 */				if (psiValue >=sec) {
+					 /*fari@2023 */						return toreturn;
+					 /*fari@2023 */				}
+					 /*fari@2023 */				count ++;		
+					 /*fari@2023 */			}
+					 /*fari@2023 */							
+					 /*fari@2023 */	}
+#else
+/** option B**/
+					           //NEXT WORKS, BUT DID NOT IMPROVED UPON THE PREVIOUS while !! :(	 //2023.02.05						
+						/*fari@2023*/	uint gapToFst = fstt - psiValue;
+						/*fari@2023*/	if (psiValue < fstt) {
+						/*fari@2023*/		if (runLenght >=gapToFst) {*i1=gapToFst+count-1; return (1+psiValue+gapToFst);}
+						/*fari@2023*/	}
+						/*fari@2023*/	psiValue +=runLenght;
+						/*fari@2023*/	count +=runLenght;
+						/*fari@2023*/	if (psiValue >=sec) { return 0;}
+#endif						
+												
+						position +=runLenght;
+						continue;   //skips the end of the loop (ten lines below)
+					}						 
+				}
+				else
+					if(huffmanCode < bigStart) {	// Negativo
+						binaryLenght = huffmanCode-negStart+1;
+						absolute_value = bitread(cPsi->stream,ptr,binaryLenght);
+						ptr += binaryLenght;
+						psiValue -= absolute_value;	
+					}
+					else {	// Grande
+						binaryLenght = huffmanCode-bigStart+1;
+						absolute_value = bitread(cPsi->stream,ptr,binaryLenght);
+						ptr += binaryLenght;
+						psiValue += absolute_value;				 
+					}				
+			
+		}
+		//*buffer++ = psiValue;
 
+					{
+						if ((psiValue >=fstt)&& (psiValue <=sec)) {
+								*i1= count;   fstt = 0xFFFFFFFFFFFFFFF;
+								toreturn=1;
+			/*//fari@2023 */	//return toreturn;  //////////////////////////////////////////////////////////
+			/*//fari@2023 */	return psiValue+1;  //////////////////////////////////////////////////////////
+						}
+						//if ((psiValue >=fst)&& (psiValue <=sec)) {
+						//	*i2= count; 
+						//	toreturn=2;
+						//}
+						if (psiValue >=sec) {
+								return toreturn;
+						}
+						count ++;		
+					}
+		
+		position ++;
+	} 
+	
+
+	return toreturn;
+}
 
 
 

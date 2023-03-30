@@ -166,9 +166,11 @@ unsigned int getPlainPsiValue(PlainPsi *cPsi, size_t position) {
 	psiValue = bitread64(cPsi->samples,position*cPsi->sampleSize,cPsi->sampleSize);
 	#endif	
 #endif
+
 #ifndef PSI_PLAIN_LOG_BASED		
 	psiValue = cPsi->psi[position];
 #endif	
+
 	return psiValue;
 
 }
@@ -323,6 +325,70 @@ int getfindPlainPsiValue(PlainPsi *cPsi, size_t ini, size_t end, ulong fst, ulon
 	} 	
 	return toreturn;
 }
+
+
+
+//simulates decompression from ini to end, and during the process:
+// sets in i1 de position (from ini on) of the fst   value >= fst  and <=sec
+// stops if i1 was set
+// returns 0 if all values are < fst.
+// returns x+1, where x is  the first value >= fst and <=sec was found    (+1 to ensure zero is not returned as a valid value);
+
+ulong getfindLeftOnlyPlainPsiValue(PlainPsi *cPsi, size_t ini, size_t end, ulong fst, ulong sec, ulong *i1) {
+
+	ulong fstt=fst;
+	ulong sect=sec;
+	register size_t i;
+	unsigned int psiValue;
+	int toreturn=0;
+
+
+#ifdef PSI_PLAIN_LOG_BASED	
+	size_t *samples = cPsi->samples;
+	size_t sampleSize = cPsi->sampleSize;
+	size_t pos= ini * sampleSize;
+			#ifdef R3H_WITHGAPS	
+	size_t OFFSET = cPsi->OFFSET;
+			#endif
+#endif
+#ifndef PSI_PLAIN_LOG_BASED		
+	uint *psi = cPsi->psi;
+#endif
+
+	
+	size_t count=0;
+	for(i=ini;i<=end;i++) {						
+#ifdef PSI_PLAIN_LOG_BASED			
+		psiValue = bitread64(samples, pos, sampleSize); pos+=sampleSize;
+				#ifdef R3H_WITHGAPS
+		psiValue +=OFFSET;	
+				#endif
+#endif
+#ifndef PSI_PLAIN_LOG_BASED	
+		psiValue = psi[i];		
+#endif				
+		{
+			if ((psiValue >=fstt)&& (psiValue <=sec)) {
+					*i1= count;   fstt = 0xFFFFFFFFFFFFFFF;
+					toreturn=1;
+					//return toreturn;  ///////////////////
+					return psiValue +1;  //////////////////	 (+1 to ensure zero is not returned as a valid value);				
+			}
+			// if ((psiValue >=fst)&& (psiValue <=sec)) {
+			// 	*i2= count; 
+			// 	toreturn=2;
+			// }
+			if (psiValue >=sec) {
+					return toreturn;
+			}
+			count ++;		
+		}
+	} 	
+	return toreturn;
+	
+}
+
+
 
 
 

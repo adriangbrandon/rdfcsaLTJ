@@ -92,9 +92,10 @@ int main (int argc, char *argv[])
 	fprintf(stdout,"\t===============================================\n");
 	fprintf(stdout,"\tInput: %lu bytes (assuming uint-values) --> Output %lu bytes (wcsa).\n", text_len, Index_size);
 	fprintf(stderr,"\tIndex size = %lu Kb\n", Index_size/1024);
-	fprintf(stdout,"\tOverall compression --> %.2f%% (%.2f bits per char).\n",
-     			(100.0*Index_size)/text_len, (Index_size*8.0)/text_len);
-	fprintf(stdout,"\tOverall compression --> %.2f%% (%.2f bits per triple).\n",
+//	fprintf(stdout,"\tOverall compression --> %.2f%% (%.2f bytes per char).\n",
+//     			(100.0*Index_size)/text_len, (Index_size*8.0)/text_len);
+//     			(100.0*Index_size)/text_len, (Index_size*8.0)/text_len);
+	fprintf(stdout,"\tOverall compression --> %.2f%% (%.2f bytes per triple).\n",
      			(100.0*Index_size)/text_len, (Index_size*12.0)/text_len);
 	fprintf(stdout,"\t===============================================\n");
 

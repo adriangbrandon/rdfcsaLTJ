@@ -81,15 +81,28 @@
 #
 #
 
-	export PSITYPE=PSI_R3H_GAPS
-	export BITMAPTYPE=BITMAP_375
-	make clean;
-	make
-				
+
+##hybrid option	(predicates with huffmanRLE, Subjects and Objects keep explicit values encoded with log2_k bits.
 #	export PSITYPE=PSI_R3HYBRID_GAPS
 #	export BITMAPTYPE=BITMAP_375
 #	make clean;
 #	make
 
-rm -f benchmarkTestwcsa_* BUILDINTINDEXwcsa_* BUILDPARSERwcsa_* BUILDSORTwcsa_* TESTPSIwcsa_* BUILDUNCOMPRESSwcsa_*
 
+##default option  (3 psi ranges encoded with huffmanRLE).
+	export PSITYPE=PSI_R3H_GAPS
+	export BITMAPTYPE=BITMAP_375
+	make clean;
+	make
+
+
+#default: hybrid option	(subjects, predicates, and objects with huffmanRLE, Plain log2_k bits, or PlainRLE depending on build options "psitypespo=213, psitypeops=312")
+	#1=HuffmanRLE-gaps, #2=Plain-gaps #3=plainRLE-gaps
+	export PSITYPE=PSI_R3CLS_GAPS
+	export BITMAPTYPE=BITMAP_375
+	make clean;
+	make
+
+
+
+unset PSITYPE

@@ -173,6 +173,8 @@ THuff createHuff (uint *freq, uint lim, uint sorted)
 
      //fprintf(stderr,"\n **** CALL ENDS CREATE_HUFF WITH  lim = %ld, freq[0]=%ld, Huffsize=%ld",lim,freq[0],H.total); 
 
+	 
+	 //H.maxCL=0; //2023-fari
      return H;
    }
 
@@ -227,7 +229,8 @@ void printCodeHuff (THuff H, uint symb)
 
 size_t decodeHuff (THuff *H, uint *symb, uint *stream, size_t ptr)
 
-   { uint pos;
+   {   
+	 uint pos;
      int d;
      pos = 0;
      d = 0;
@@ -240,6 +243,29 @@ size_t decodeHuff (THuff *H, uint *symb, uint *stream, size_t ptr)
    }
 
 
+//size_t decodeHuff_src (THuff *H, uint *symb, uint *stream, size_t ptr)
+//
+//   {   
+//	 uint pos;
+//     int d;
+//     pos = 0;
+//     d = 0;
+//     while (pos < H->fst[d])
+//        { pos = (pos << 1) | bitget(stream,ptr);
+//          ptr++; d++;
+//        }
+//     *symb = H->s.symb[H->num[d]+pos-H->fst[d]];
+//     return ptr;
+//   }
+//
+//size_t decodeHuffTables (THuff *H, uint *symb, uint *stream, size_t ptr)
+//
+//   {   
+//	 uint idx = bitread(stream,ptr,H->b);
+//	 *symb = H->lookuptable[idx];
+//	 return ptr+H->lookupptrgap[idx];
+//   }
+//
 
 
 /*   { uint pos;  // This "improved" code is actually slower!
@@ -359,6 +385,36 @@ void prepareToDecode(THuff *H)
 	 } 
      free (symb);	 
 }    
+
+
+//void prepareToDecodeWithTables(THuff *H) {
+//	uint b = H->depth;
+//	uint bb = 1<<H->depth; //number of entries in the table.
+//	uint *lookuptable  = (uint *) malloc(bb*sizeof(uint));	
+//	uint *lookupptrgap = (uint *) malloc(bb*sizeof(uint));
+//	
+//	fflush(stdout);fflush(stderr);
+//	printf("\n prepareToDecodeWithTables ----------------------------------------------------");
+//	printf("\n H->lim = %u, depth = %u, bb = %u",H->lim, H->depth, bb);
+//	printf("\n prepareToDecodeWithTables ----------------------------------------------------");	
+//	fflush(stdout);fflush(stderr);	
+//
+//	uint i,val;
+//	uint stream[2];
+//	size_t ptr;
+//	for (i=0;i<bb;i++) {
+//		ptr=0;
+//		bitwrite(stream,ptr,b,i);
+//		ptr= decodeHuff_src(H,&val,stream,ptr);
+//		lookuptable[i]=val;
+//		lookupptrgap[i]=ptr;		
+//	}
+//	
+//	H->b = H->depth;
+//	H->lookuptable=lookuptable;
+//	H->lookupptrgap = lookupptrgap;
+//		
+//}
 
 
 ////////////     

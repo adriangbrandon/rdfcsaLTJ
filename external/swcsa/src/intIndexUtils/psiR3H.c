@@ -262,8 +262,35 @@ int getfindPsiR3HValue(CompressedPsiR3H *cPsi, size_t ini, size_t end, ulong fst
 }
 
 
+//simulates decompression from ini to end, and during the process:
+// sets in i1 de position (from ini on) of the fst   value >= fst  and <=sec
+// stops if i1 was set
+// returns 0 if all values are < fst.
+// NO LONGER returns 1 if a value >= fst and <=sec was found
+// returns x+1, where x is  the first value >= fst and <=sec was found    (+1 to ensure zero is not returned as a valid value);
 
-
+ulong getfindPsiLeftOnlyR3HValue(CompressedPsiR3H *cPsi, size_t ini, size_t end, ulong fst, ulong sec, ulong *i1){
+#ifndef NDEBUG
+	//for pattern VVV only!! IMPLEMENTAR Funcion propia para isto ??
+	if ( ((ini < cPsi->inioffset[PRE]) && (end >=cPsi->inioffset[PRE]) ) ||
+		 ((ini < cPsi->inioffset[OBJ]) && (end >=cPsi->inioffset[OBJ]) )    ) {   
+		printf("\n should not be here!! @getfindPsiR3HValue... exiting\n");
+	}
+#endif
+	
+	
+	if (ini < cPsi->inioffset[PRE]) {
+		return getfindLeftOnlyHuffmanPsiR3Value (&(cPsi->hcPsiS), ini,end,fst,sec,i1);
+	}
+	else if (ini < cPsi->inioffset[OBJ]) {
+		ini-=cPsi->inioffset[PRE]; end -=cPsi->inioffset[PRE];
+		return getfindLeftOnlyHuffmanPsiR3Value (&(cPsi->hcPsiP), ini,end,fst,sec,i1);
+	}
+	else {
+		ini-=cPsi->inioffset[OBJ]; end -=cPsi->inioffset[OBJ];
+		return getfindLeftOnlyHuffmanPsiR3Value (&(cPsi->hcPsiO), ini,end,fst,sec,i1);
+	}
+}
 
 
 void storePsiR3H(CompressedPsiR3H *compressedPsi, char *filename) {

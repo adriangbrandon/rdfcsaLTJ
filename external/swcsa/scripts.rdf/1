@@ -1,0 +1,634 @@
+[1;31m
+
+ declared source data type is: 
+		 input graphDB format is the regular one  (from HDT-parser) 
+[0m
+Processing 19.1%Processing 38.1%Processing 57.2%Processing 76.2%Processing 95.3%Processing 100.0%
+
+ MAIN VALUES: ns(+1dummy)=335927, np(+1dummy)= 29, no(+1dummy)=440605, nso=290291, n=1049640 (n-1dummy=1049639)
+
+
+ 1049640 records read (3 entries per each one), ns=335927, np=29, no=440605, nso=290291 
+
+	[290416][1][49232]
+	[290420][1][49233]
+	[290421][1][49234]
+	[290425][1][49235]
+	[290426][1][49236]
+	[290428][1][49237]
+	[290429][1][49238]
+	[290506][1][49239]
+	[290507][1][49240]
+	[290536][1][49241]
+...
+...
+
+	[335798][12][109346]
+	[335799][12][109347]
+	[335800][12][109348]
+	[335801][12][109349]
+	[335802][12][109350]
+	[335803][12][109351]
+	[335804][12][109352]
+	[335805][12][109353]
+	[335806][12][109354]
+	[335807][12][109355]
+...
+...
+
+	[3589][28][311045]
+
+	[3590][28][319477]
+
+	[3591][28][301335]
+
+	[3592][28][310486]
+
+	[3593][28][320146]
+
+	[3594][28][327407]
+
+	[3595][28][348342]
+
+	[3596][28][320628]
+
+	[3597][28][337204]
+
+	[0][0][0]
+
+ UNSORTED: 3598 > 335866  (record j=8822)
+
+ INPUT RECORDS ARE #not# SORTED INCREASINGLY
+ SORTED RECORDS ARE SORTED INCREASINGLY
+
+ 1049640 records read (3 entries per each one), ns=335927, np=29, no=440605, nso=290291 
+
+	[0][0][0]
+	[1][21][438914]
+	[2][21][438914]
+	[3][21][438914]
+	[4][21][438914]
+	[5][21][438914]
+	[6][21][438914]
+	[7][21][438914]
+	[8][21][438914]
+	[9][21][438914]
+...
+...
+
+	[128102][7][208416]
+	[128102][7][254050]
+	[128102][10][27]
+	[128102][16][299204]
+	[128102][21][436690]
+	[128103][6][321561]
+	[128103][7][208417]
+	[128103][7][254051]
+	[128103][10][27]
+	[128103][16][299279]
+...
+...
+
+	[335917][12][109465]
+
+	[335918][12][109466]
+
+	[335919][12][109467]
+
+	[335920][12][109468]
+
+	[335921][12][109469]
+
+	[335922][12][109470]
+
+	[335923][12][109471]
+
+	[335924][12][109472]
+
+	[335925][12][109473]
+
+	[335926][12][109474]
+
+
+ **sin huecos en sujetos**
+ **sin huecos en predicados**
+ **sin huecos en objetos**
+	 parameters for RDFCSA-facade:
+	              : psitypespo ={2,2,2}, psitypeops ={2,2,2}
+ parameters: "sourceFormat=XXX; sPsi=2; nsHuff=0.1;psiSF=4; psitypespo=222; psitypeops=222 2; psitypeR1R2R3=222"
+
+ SUBJECTS: minID found in source= 0, maxID= 335926 :: collection-S = 335927
+ PREDICTS: minID found in source= 0, maxID= 28 :: collection-P = 29
+ OBJJECTS: minID found in source= 0, maxID= 440604 :: collection-O = 440605
+ SUBJECTS-OBJECTS is 290291 
+ GAPS=  
+ GAPS[0]= 0
+ GAPS[1]= 335927
+ GAPS[2]= 335956
+ GAPS[3]= 776561
+
+ antes de sumar gaps 
+ SE[0]= 0
+ SE[1]= 0
+ SE[2]= 0
+ SE[3]= 1
+ SE[4]= 21
+ SE[5]= 438914
+ SE[6]= 2
+ SE[7]= 21
+
+ tras sumar gaps 
+ SE[0]= 0
+ SE[1]= 335927
+ SE[2]= 335956
+ SE[3]= 1
+ SE[4]= 335948
+ SE[5]= 774870
+ SE[6]= 2
+ SE[7]= 335948
+ SE[3148917]= 335926
+ SE[3148918]= 335939
+ SE[3148919]= 445430
+ SE[3148920]= 776561
+ SUBJECTS: minID found in source2= 0, maxID= 335926 :: collection-S = 335927
+ PREDICTS: minID found in source2= 335927, maxID= 335955 :: collection-S = 29
+ OBJJECTS: minID found in source2= 335956, maxID= 776560 :: collection-S = 440605
+ SUBJECTS-OBJECTS-2 is 290291 
+ **** CREATING CSA-bottom-layer *****
+	 parameters for iCSA: samplePsi=2
+	              : nsHuff=102, psiSearchFactor = 4 --> jump = 8
+	              : psitypesR1R2R3 ={0,0,0}[1;31m
+ICSA-OPTIONS: [0;34mPSI_R3CLS_GAPS :: psitypespo ={0,0,0} plain PSI repres would be encoded as log_k-bit-arrays[0;35m :: -GAPS activated
+[1;31mBITMAP-OPTIONS: [0;34mBITMAP_375
+[1;31mT_PSI: [0;34m2[0m
+
+	 *BUILDING THE SUFFIX ARRAY over 3148921 integers... (with qsort)
+	 ...... ended.
+ SA[0]= 0
+ SA[1]= 3
+ SA[2]= 6
+   
+ SA[3148917]= 58247
+ SA[3148918]= 22895
+ SA[3148919]= 60368
+ SA[3148920]= 3148920
+ A-inv[0]= 0
+ A-inv[1]= 3
+ A-inv[2]= 6
+ A-inv[3]= 9
+ A-inv[4]= 12
+ A-inv[5]= 15
+ A-inv[6]= 18
+ A-inv[7]= 21
+ A-inv[8]= 24
+ A-inv[9]= 27
+   
+	 Creating compressed Psi...
+ psi antes de cíclica: Rangos = [0,1049639] [1049640,2099279] [2099280,3148920] 
+ PSI[0]= 1049640
+ PSI[1]= 2073184
+ PSI[2]= 2073185
+ PSI[3]= 2073186
+ PSI[4]= 2073187
+ PSI[5]= 2073188
+ PSI[6]= 2073189
+ PSI[7]= 2073190
+ PSI[8]= 2073191
+ PSI[9]= 2073192
+   
+ PSI[1049635]= 1574580
+ PSI[1049636]= 1574581
+ PSI[1049637]= 1574582
+ PSI[1049638]= 1574583
+ PSI[1049639]= 1574584
+ PSI[1049640]= 2099280
+ PSI[1049641]= 2196335
+ PSI[1049642]= 2196336
+ PSI[1049643]= 2196337
+   
+ PSI[2099275]= 2778819
+ PSI[2099276]= 2778839
+ PSI[2099277]= 2778845
+ PSI[2099278]= 2778856
+ PSI[2099279]= 2778865
+ PSI[2099280]= 1
+ PSI[2099281]= 479282
+ PSI[2099282]= 479288
+ PSI[2099283]= 479318
+   
+ PSI[3148911]= 511223
+ PSI[3148912]= 537455
+ PSI[3148913]= 529638
+ PSI[3148914]= 654524
+ PSI[3148915]= 18830
+ PSI[3148916]= 22354
+ PSI[3148917]= 19416
+ PSI[3148918]= 7632
+ PSI[3148919]= 20123
+ PSI[3148920]= 0
+   
+ psi cíclica: Rangos = [0,1049639] [1049640,2099279] [2099280,3148920] 
+ PSI[0]= 1049640
+ PSI[1]= 2073184
+ PSI[2]= 2073185
+ PSI[3]= 2073186
+ PSI[4]= 2073187
+ PSI[5]= 2073188
+ PSI[6]= 2073189
+ PSI[7]= 2073190
+ PSI[8]= 2073191
+ PSI[9]= 2073192
+   
+ PSI[1049635]= 1574580
+ PSI[1049636]= 1574581
+ PSI[1049637]= 1574582
+ PSI[1049638]= 1574583
+ PSI[1049639]= 1574584
+ PSI[1049640]= 2099280
+ PSI[1049641]= 2196335
+ PSI[1049642]= 2196336
+ PSI[1049643]= 2196337
+   
+ PSI[2099275]= 2778819
+ PSI[2099276]= 2778839
+ PSI[2099277]= 2778845
+ PSI[2099278]= 2778856
+ PSI[2099279]= 2778865
+ PSI[2099280]= 0
+ PSI[2099281]= 479281
+ PSI[2099282]= 479287
+ PSI[2099283]= 479317
+   
+ PSI[3148911]= 511222
+ PSI[3148912]= 537454
+ PSI[3148913]= 529637
+ PSI[3148914]= 654523
+ PSI[3148915]= 18829
+ PSI[3148916]= 22353
+ PSI[3148917]= 19415
+ PSI[3148918]= 7631
+ PSI[3148919]= 20122
+ PSI[3148920]= 0
+   
+ call to psi_rep_hyb3r - compress Psi
+
+ call to psi_rep_huffman_rle - compress Psi
+
+		 [3] diffsHT.total = 1641103 bits 
+		 [3]streamSize = 10185887 , index = 102
+ **************** maxVal3R = 1049639 , bits = 21 *******
+ ====================== maxVal3R = 1049639 , bits = 21 *******
+ espacio para Sample-values-psi = 1377656
+ espacio para Sample-values-psi** = 1377656
+ espacio para Sample-pointers-psi = 1574464
+ espacio para stream-psi = 1273236
+@@@@@@@@@ psi samaplePeriod= 2, ns=102 
+@@@@@@@@@ psi size= [samples = 1377656] bytes 
+@@@@@@@@@ psi size= [pointers = 1574464] bytes 
+@@@@@@@@@ psi size= [totalsize diffsHt.total  = 1641103] bits 
+
+@@@@@@@@@ psi size= [streamsize+largevalues =1273236] bytes 
+@@@@@@@@@ psi size= [sizeHuff tree = 364] bytes 
+ call to psi_rep_huffman_rle - compress Psi
+
+		 [3] diffsHT.total = 609420 bits 
+		 [3]streamSize = 615800 , index = 102
+ **************** maxVal3R = 1049639 , bits = 21 *******
+ ====================== maxVal3R = 1049639 , bits = 21 *******
+ espacio para Sample-values-psi = 1377656
+ espacio para Sample-values-psi** = 1377656
+ espacio para Sample-pointers-psi = 1312056
+ espacio para stream-psi = 76976
+@@@@@@@@@ psi samaplePeriod= 2, ns=102 
+@@@@@@@@@ psi size= [samples = 1377656] bytes 
+@@@@@@@@@ psi size= [pointers = 1312056] bytes 
+@@@@@@@@@ psi size= [totalsize diffsHt.total  = 609420] bits 
+
+@@@@@@@@@ psi size= [streamsize+largevalues =76976] bytes 
+@@@@@@@@@ psi size= [sizeHuff tree = 360] bytes 
+ call to psi_rep_huffman_rle - compress Psi
+
+		 [3] diffsHT.total = 1917164 bits 
+		 [3]streamSize = 3929333 , index = 102
+ **************** maxVal3R = 1049639 , bits = 21 *******
+ ====================== maxVal3R = 1049639 , bits = 21 *******
+ espacio para Sample-values-psi = 1377656
+ espacio para Sample-values-psi** = 1377656
+ espacio para Sample-pointers-psi = 1443264
+ espacio para stream-psi = 491168
+@@@@@@@@@ psi samaplePeriod= 2, ns=102 
+@@@@@@@@@ psi size= [samples = 1377656] bytes 
+@@@@@@@@@ psi size= [pointers = 1443264] bytes 
+@@@@@@@@@ psi size= [totalsize diffsHt.total  = 1917164] bits 
+
+@@@@@@@@@ psi size= [streamsize+largevalues =491168] bytes 
+@@@@@@@@@ psi size= [sizeHuff tree = 416] bytes 
+ inioffset[]= < 0, 1049640, 2099280 >
+ minPsiVal[]= < 1049640, 2099280, 0 >
+ :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+ 	 loading bitmap-table-predicates: info
+ 	 suffixArraySize = 3148921
+ 	 n = 1049640 , (suffixArraySize-1)/3 = 1049640
+ 	 ns = 335927 
+ 	 np = 31 
+ 	 rankfirstPredicate = 335927 
+ :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+
+ @@ Summary of self-index on Integers:
+  ===================================================:
+ Summary Self-index on integers (icsa) layer:
+    icsa structure = 80 bytes
+     psi          =   10305704 bytes
+     -D (bitmap)  =     393616 bytes
+     -rank for D  =     159812 bytes
+     +Dselect1Predicates table =        128 bytes
+ Total = ** 10859340 bytes (in RAM) ** 
+
+  ===================================================:
+ Summary Self-index on integers (PSI) :
+    icsa structure = 80 bytes
+    psi         =   10305704 bytes
+   psi ... Size at pos psi[T1  (00-33%)]   =    4225342 bytes (accum =    4225342 bytes)
+   psi ... Size at pos psi[T2  (33-66%)]   =    2766672 bytes (accum =    6992015 bytes)
+   psi ... Size at pos psi[T3  (66-100%)]  =    3312074 bytes (accum =   10304089 bytes)
+  ===================================================:
+	**** [iCSA built on 3148920 integers (included dummy (3)). Size = 10859340 bytes... RAM
+
+GRAPH OPS-- SORTED RECORDS ARE SORTED INCREASINGLY
+ parameters: "sourceFormat=XXX; sPsi=2; nsHuff=0.1;psiSF=4; psitypespo=222; psitypeops=222 2; psitypeR1R2R3=222"
+
+ SUBJECTS: minID found in source= 0, maxID= 440604 :: collection-S = 335927
+ PREDICTS: minID found in source= 0, maxID= 28 :: collection-P = 29
+ OBJJECTS: minID found in source= 0, maxID= 335926 :: collection-O = 440605
+ SUBJECTS-OBJECTS is 290291 
+ GAPS=  
+ GAPS[0]= 0
+ GAPS[1]= 440605
+ GAPS[2]= 440634
+ GAPS[3]= 776561
+
+ antes de sumar gaps 
+ SE[0]= 0
+ SE[1]= 0
+ SE[2]= 0
+ SE[3]= 1
+ SE[4]= 10
+ SE[5]= 120573
+ SE[6]= 1
+ SE[7]= 10
+
+ tras sumar gaps 
+ SE[0]= 0
+ SE[1]= 440605
+ SE[2]= 440634
+ SE[3]= 1
+ SE[4]= 440615
+ SE[5]= 561207
+ SE[6]= 1
+ SE[7]= 440615
+ SE[3148917]= 440604
+ SE[3148918]= 440629
+ SE[3148919]= 443836
+ SE[3148920]= 776561
+ SUBJECTS: minID found in source2= 0, maxID= 440604 :: collection-S = 335927
+ PREDICTS: minID found in source2= 440605, maxID= 440633 :: collection-S = 29
+ OBJJECTS: minID found in source2= 440634, maxID= 776560 :: collection-S = 440605
+ SUBJECTS-OBJECTS-2 is 290291 
+ **** CREATING CSA-bottom-layer *****
+	 parameters for iCSA: samplePsi=2
+	              : nsHuff=102, psiSearchFactor = 4 --> jump = 8
+	              : psitypesR1R2R3 ={0,0,0}[1;31m
+ICSA-OPTIONS: [0;34mPSI_R3CLS_GAPS :: psitypespo ={0,0,0} plain PSI repres would be encoded as log_k-bit-arrays[0;35m :: -GAPS activated
+[1;31mBITMAP-OPTIONS: [0;34mBITMAP_375
+[1;31mT_PSI: [0;34m2[0m
+
+	 *BUILDING THE SUFFIX ARRAY over 3148921 integers... (with qsort)
+	 ...... ended.
+ SA[0]= 0
+ SA[1]= 3
+ SA[2]= 6
+   
+ SA[3148917]= 471887
+ SA[3148918]= 471890
+ SA[3148919]= 471893
+ SA[3148920]= 3148920
+ A-inv[0]= 0
+ A-inv[1]= 3
+ A-inv[2]= 6
+ A-inv[3]= 9
+ A-inv[4]= 12
+ A-inv[5]= 15
+ A-inv[6]= 18
+ A-inv[7]= 21
+ A-inv[8]= 24
+ A-inv[9]= 27
+   
+	 Creating compressed Psi...
+ psi antes de cíclica: Rangos = [0,1049639] [1049640,2099279] [2099280,3148920] 
+ PSI[0]= 1049640
+ PSI[1]= 1439546
+ PSI[2]= 1439547
+ PSI[3]= 1439552
+ PSI[4]= 1439556
+ PSI[5]= 1439565
+ PSI[6]= 1439570
+ PSI[7]= 1439580
+ PSI[8]= 1439587
+ PSI[9]= 1439588
+   
+ PSI[1049635]= 2080693
+ PSI[1049636]= 2081173
+ PSI[1049637]= 2080779
+ PSI[1049638]= 2079236
+ PSI[1049639]= 2080875
+ PSI[1049640]= 2099280
+ PSI[1049641]= 3094586
+ PSI[1049642]= 3094591
+ PSI[1049643]= 3094593
+   
+ PSI[2099275]= 2121972
+ PSI[2099276]= 2121978
+ PSI[2099277]= 2121984
+ PSI[2099278]= 2121991
+ PSI[2099279]= 2121998
+ PSI[2099280]= 1
+ PSI[2099281]= 1047834
+ PSI[2099282]= 1047835
+ PSI[2099283]= 1047836
+   
+ PSI[3148911]= 157290
+ PSI[3148912]= 157291
+ PSI[3148913]= 157292
+ PSI[3148914]= 157293
+ PSI[3148915]= 157294
+ PSI[3148916]= 157295
+ PSI[3148917]= 157296
+ PSI[3148918]= 157297
+ PSI[3148919]= 157298
+ PSI[3148920]= 0
+   
+ psi cíclica: Rangos = [0,1049639] [1049640,2099279] [2099280,3148920] 
+ PSI[0]= 1049640
+ PSI[1]= 1439546
+ PSI[2]= 1439547
+ PSI[3]= 1439552
+ PSI[4]= 1439556
+ PSI[5]= 1439565
+ PSI[6]= 1439570
+ PSI[7]= 1439580
+ PSI[8]= 1439587
+ PSI[9]= 1439588
+   
+ PSI[1049635]= 2080693
+ PSI[1049636]= 2081173
+ PSI[1049637]= 2080779
+ PSI[1049638]= 2079236
+ PSI[1049639]= 2080875
+ PSI[1049640]= 2099280
+ PSI[1049641]= 3094586
+ PSI[1049642]= 3094591
+ PSI[1049643]= 3094593
+   
+ PSI[2099275]= 2121972
+ PSI[2099276]= 2121978
+ PSI[2099277]= 2121984
+ PSI[2099278]= 2121991
+ PSI[2099279]= 2121998
+ PSI[2099280]= 0
+ PSI[2099281]= 1047833
+ PSI[2099282]= 1047834
+ PSI[2099283]= 1047835
+   
+ PSI[3148911]= 157289
+ PSI[3148912]= 157290
+ PSI[3148913]= 157291
+ PSI[3148914]= 157292
+ PSI[3148915]= 157293
+ PSI[3148916]= 157294
+ PSI[3148917]= 157295
+ PSI[3148918]= 157296
+ PSI[3148919]= 157297
+ PSI[3148920]= 0
+   
+ call to psi_rep_hyb3r - compress Psi
+
+ call to psi_rep_huffman_rle - compress Psi
+
+		 [3] diffsHT.total = 1495881 bits 
+		 [3]streamSize = 3179272 , index = 102
+ **************** maxVal3R = 1049639 , bits = 21 *******
+ ====================== maxVal3R = 1049639 , bits = 21 *******
+ espacio para Sample-values-psi = 1377656
+ espacio para Sample-values-psi** = 1377656
+ espacio para Sample-pointers-psi = 1443256
+ espacio para stream-psi = 397412
+@@@@@@@@@ psi samaplePeriod= 2, ns=102 
+@@@@@@@@@ psi size= [samples = 1377656] bytes 
+@@@@@@@@@ psi size= [pointers = 1443256] bytes 
+@@@@@@@@@ psi size= [totalsize diffsHt.total  = 1495881] bits 
+
+@@@@@@@@@ psi size= [streamsize+largevalues =397412] bytes 
+@@@@@@@@@ psi size= [sizeHuff tree = 400] bytes 
+ call to psi_rep_huffman_rle - compress Psi
+
+		 [3] diffsHT.total = 1317411 bits 
+		 [3]streamSize = 1352545 , index = 102
+ **************** maxVal3R = 1049639 , bits = 21 *******
+ ====================== maxVal3R = 1049639 , bits = 21 *******
+ espacio para Sample-values-psi = 1377656
+ espacio para Sample-values-psi** = 1377656
+ espacio para Sample-pointers-psi = 1377656
+ espacio para stream-psi = 169072
+@@@@@@@@@ psi samaplePeriod= 2, ns=102 
+@@@@@@@@@ psi size= [samples = 1377656] bytes 
+@@@@@@@@@ psi size= [pointers = 1377656] bytes 
+@@@@@@@@@ psi size= [totalsize diffsHt.total  = 1317411] bits 
+
+@@@@@@@@@ psi size= [streamsize+largevalues =169072] bytes 
+@@@@@@@@@ psi size= [sizeHuff tree = 384] bytes 
+ call to psi_rep_huffman_rle - compress Psi
+
+		 [3] diffsHT.total = 1924648 bits 
+		 [3]streamSize = 10234645 , index = 102
+ **************** maxVal3R = 1049639 , bits = 21 *******
+ ====================== maxVal3R = 1049639 , bits = 21 *******
+ espacio para Sample-values-psi = 1377656
+ espacio para Sample-values-psi** = 1377656
+ espacio para Sample-pointers-psi = 1574464
+ espacio para stream-psi = 1279332
+@@@@@@@@@ psi samaplePeriod= 2, ns=102 
+@@@@@@@@@ psi size= [samples = 1377656] bytes 
+@@@@@@@@@ psi size= [pointers = 1574464] bytes 
+@@@@@@@@@ psi size= [totalsize diffsHt.total  = 1924648] bits 
+
+@@@@@@@@@ psi size= [streamsize+largevalues =1279332] bytes 
+@@@@@@@@@ psi size= [sizeHuff tree = 376] bytes 
+ inioffset[]= < 0, 1049640, 2099280 >
+ minPsiVal[]= < 1049640, 2099280, 0 >
+ :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+ 	 loading bitmap-table-predicates: info
+ 	 suffixArraySize = 3148921
+ 	 n = 1049640 , (suffixArraySize-1)/3 = 1049640
+ 	 ns = 440605 
+ 	 np = 31 
+ 	 rankfirstPredicate = 440605 
+ :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+
+ @@ Summary of self-index on Integers:
+  ===================================================:
+ Summary Self-index on integers (icsa) layer:
+    icsa structure = 80 bytes
+     psi          =   10375752 bytes
+     -D (bitmap)  =     393616 bytes
+     -rank for D  =     159812 bytes
+     +Dselect1Predicates table =        128 bytes
+ Total = ** 10929388 bytes (in RAM) ** 
+
+  ===================================================:
+ Summary Self-index on integers (PSI) :
+    icsa structure = 80 bytes
+    psi         =   10375752 bytes
+   psi ... Size at pos psi[T1  (00-33%)]   =    3218311 bytes (accum =    3218311 bytes)
+   psi ... Size at pos psi[T2  (33-66%)]   =    2924367 bytes (accum =    6142679 bytes)
+   psi ... Size at pos psi[T3  (66-100%)]  =    4231443 bytes (accum =   10374122 bytes)
+  ===================================================:
+	**** [iCSA built on 3148920 integers (included dummy (3)). Size = 10929388 bytes... RAM
+
+ Index BUILT !!
+
+ Saving structures to disk: ./indexes/jamendo.* ** iCSA saved!
+ ** SE saved!
+
+ Saving structures to disk: ./indexes/jamendo-dualOPS.* ** iCSA saved!
+ ** SE saved!
+
+ Index SAVED !!
+
+ Index occupied 21788872 bytes, 2 extra mallocs = 8 building time: 0.819 secs
+
+
+ 	 --testRecoverAndCompareSPO_OPS skipped (see Makefile: NO_TEST_SPO_EQ_OPS flag) 
+
+	Index size = 21278 Kb
+	===============================================
+	Input: 12595680 bytes (assuming uint-values) --> Output 21788872 bytes (wcsa).
+	Overall compression --> 172.99% (20.76 bytes per triple).
+	===============================================
+
+[destroying index] ...Freed 10859412 bytes... RAM
+	[destroying  iCSA: compressed PSI structure] ...Freed 10305704 bytes... RAM
+	[destroying  iCSA: D vector] ...Freed 393616 bytes... RAM
+	[destroying Dselect1Predicates table ... Freed 128 bytes... RAM
+	**** [the whole iCSA ocuppied ... 10859340 bytes... RAM
+	**** iCSA size = 10859340 bytes 
+
+[destroying index] ...Freed 10929460 bytes... RAM
+	[destroying  iCSA: compressed PSI structure] ...Freed 10375752 bytes... RAM
+	[destroying  iCSA: D vector] ...Freed 393616 bytes... RAM
+	[destroying Dselect1Predicates table ... Freed 128 bytes... RAM
+	**** [the whole iCSA ocuppied ... 10929388 bytes... RAM
+	**** iCSA size = 10929388 bytes 

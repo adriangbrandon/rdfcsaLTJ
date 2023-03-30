@@ -43,7 +43,7 @@
 // Global para que funcione a funcion de comparacion do quicksort
 uint *intVectorqsort;
 
-void printPsiIndexType(uint t) {
+void printPsiIndexType(uint t, uint *psitypes) { 
 	//http://web.theurbanpenguin.com/adding-color-to-your-output-from-c/
 	fflush(stdout);fflush(stderr);
 	printf("\033[1;31m\n");
@@ -87,6 +87,26 @@ void printPsiIndexType(uint t) {
 		#endif	
 	#endif	
 
+
+
+
+	#ifdef PSI_R3CLS_GAPS
+		printf("PSI_R3CLS_GAPS");
+
+	    printf(" :: psitypespo ={%u,%u,%u}", psitypes[0], psitypes[1], psitypes[2]); 
+	                                                         //        psitypes_ops[0], psitypes_ops[1], psitypes_ops[2]);
+		#ifdef PSI_PLAIN_LOG_BASED
+			printf(" plain PSI repres would be encoded as log_k-bit-arrays");
+		#else	
+			printf(" plain PSI repres would be encoded as uint32-arrays");
+		#endif
+
+		#ifdef R3H_WITHGAPS
+			printf("\033[0;35m :: -GAPS activated");
+		#endif	
+	#endif
+	
+	
 
 	#ifdef PSI_PLAIN
 		printf("PSI_PLAIN");
@@ -153,7 +173,7 @@ int buildIntIndex (uint *aintVector, uint n, uint nEntries, char *build_options,
 	myicsa->D = (uint*) malloc (sizeof(uint) * ((textSize+31)/32));	
 	myicsa->D[ ((textSize+31)/32) -1]=0;	
 
-	printPsiIndexType(myicsa->T_Psi);
+	printPsiIndexType(myicsa->T_Psi, myicsa->psitypes);
 
 	
 //@@	myicsa->samplesASize = (textSize + myicsa->T_A - 1) / myicsa->T_A;// + 1;
@@ -276,14 +296,105 @@ int buildIntIndex (uint *aintVector, uint n, uint nEntries, char *build_options,
 	#ifdef PSI_VBYTERLE	
 		myicsa->vbPsi = vbyteCompressPsi(Psi,textSize,myicsa->T_Psi);
 	#endif
-	
+
 	#ifdef PSI_R3H		 
 	myicsa->hcPsi = CompressPsiR3H(Psi,textSize,myicsa->T_Psi,nsHUFF);
+
+
+
+
+//	{
+////		uint psitypes[3]={0, 0, 0};
+////		uint psitypes[3]={PSIREP_PLAIN, PSIREP_PLAIN, PSIREP_PLAIN};
+//		uint psitypes[3]={PSIREP_PLAIN, PSIREP_HUFFMAN_RLE, PSIREP_PLAIN_RLE};
+//	//	uint psitypes[3]={ PSIREP_HUFFMAN_RLE, PSIREP_HUFFMAN_RLE,PSIREP_HUFFMAN_RLE};
+//	//psi_rep *psi_obj = new psi_rep_plain(Psi,textSize,myicsa->T_Psi,nsHUFF);
+////	psi_rep *psi_obj = new psi_rep_plain(Psi,textSize,0,0,0);    /** ------------------------------------ */
+////	psi_rep *psi_obj = new psi_rep_plain_rle(Psi,textSize,0,myicsa->T_Psi,nsHUFF);    /** ------------------------------------ */
+////	psi_rep *psi_obj = new psi_rep_huffman_rle(Psi,textSize,0,myicsa->T_Psi,nsHUFF);    /** ------------------------------------ */
+//	psi_rep *psi_obj = new psi_rep_hyb3r(Psi,textSize,0,myicsa->T_Psi,nsHUFF, psitypes);    /** ------------------------------------ */
+//		{
+//		size_t psiSize = textSize;
+//		
+//			fprintf(stderr,"\n Test compress/uncompress PSI is starting for all i in Psi[0..%lu]\n ",psiSize-1); fflush(stdout); fflush(stderr);
+//			size_t i;
+//			uint val1,val2;	
+//			fflush(stdout);
+//			uint count=0;
+//			uint step = psiSize/1000;
+//			for (i=0; i<psiSize; i++) {
+//				if(i%step==0) fprintf(stderr, "Processing %.1f%%\r", (float)i/psiSize*100);
+//					val1= psi_obj->getPsiValue(i);
+//					val2=Psi[i];
+//					if (val1 != val2) { count++;
+//							fprintf(stderr,"\n i=%zu,psi[i] vale (compressed = %u) <> (original= %u), ",i, val1,val2);
+//							//fprintf(stderr,"\n i=%zu,diffs[i] = %ld ",i, (long)diffs[i]); fflush(stdout);fflush(stderr);
+//							if (count > 20) {
+//								fprintf(stderr,"\n test failed!!");
+//								exit(0);
+//							}
+//								
+//					}
+//			}
+//
+//					fprintf(stderr,"\033[0;35m ");			
+//				fprintf(stderr,"\n Test compress/uncompress PSI passed *OK-MARZO-2023 (1:after build)*, "); fflush(stdout); fflush(stderr);
+//					fprintf(stderr,"\033[0m\n");
+//			fflush(stdout);fflush(stderr);
+//		}
+//		
+//		psi_obj->psi_save("tmptmp");
+//				
+//		delete (psi_rep *) psi_obj;		
+//		
+//		//psi_obj = psi_rep_plain_rle::psi_load("tmptmp");
+//		psi_rep *psi_obj2 = psi_rep::psi_load("tmptmp");
+//		{
+//		size_t psiSize = textSize;
+//		
+//			fprintf(stderr,"\n Test compress/uncompress PSI is starting for all i in Psi[0..%lu]\n ",psiSize-1); fflush(stdout); fflush(stderr);
+//			size_t i;
+//			uint val1,val2;	
+//			fflush(stdout);
+//			uint count=0;
+//			uint step = psiSize/1000;
+//			for (i=0; i<psiSize; i++) {
+//				if(i%step==0) fprintf(stderr, " Processing %.1f%%\r", (float)i/psiSize*100);
+//					val1= psi_obj2->getPsiValue(i);
+//					val2=Psi[i];
+//					if (val1 != val2) { count++;
+//							fprintf(stderr,"\n i=%zu,psi[i] vale (compressed = %u) <> (original= %u), ",i, val1,val2);
+//							//fprintf(stderr,"\n i=%zu,diffs[i] = %ld ",i, (long)diffs[i]); fflush(stdout);fflush(stderr);
+//							if (count > 20) {
+//								fprintf(stderr,"\n test failed!!");
+//								exit(0);
+//							}
+//								
+//					}
+//			}
+//
+//					fprintf(stderr,"\033[0;35m ");			
+//				fprintf(stderr,"\n Test compress/uncompress PSI passed *OK-MARZO-2023 (2:after load)*, "); fflush(stdout); fflush(stderr);
+//					fprintf(stderr,"\033[0m\n");
+//			fflush(stdout);fflush(stderr);
+//		}
+//	delete (psi_rep *) psi_obj2;		
+//
+//		
+//	}
+	
 	#endif				
 
 	#ifdef PSI_R3HYBRID	 
 	myicsa->hcPsi = CompressPsiR3Hybrid(Psi,textSize,myicsa->T_Psi,nsHUFF);
 	#endif				
+
+
+	#ifdef PSI_R3CLS_GAPS
+		//codigo here
+		myicsa->psi_obj = new psi_rep_hyb3r(Psi,textSize,0,myicsa->T_Psi,nsHUFF, myicsa->psitypes); 
+	#endif
+		
 
 	#ifdef PSI_PLAIN
 	myicsa->plPsi = createPlainPsi(Psi,textSize);
@@ -535,6 +646,8 @@ int saveIntIndex(void *index, const char *pathname) {
 
 	write_err=write(file, &(myicsa->nEntries), sizeof(uint));
 	write_err=write(file, &(myicsa->suffixArraySize), sizeof(int));
+
+	write_err=write(file, myicsa->psitypes, 3*sizeof(int));
 	close(file);		
 
 	strcpy(filename, basename);
@@ -560,6 +673,12 @@ int saveIntIndex(void *index, const char *pathname) {
 	#ifdef PSI_R3HYBRID
 		storePsiR3Hybrid(&(myicsa->hcPsi), filename);	
 	#endif	
+	
+	#ifdef PSI_R3CLS_GAPS
+		myicsa->psi_obj->psi_save(filename);
+	#endif
+		
+	
 	
 	#ifdef PSI_PLAIN
 		storePlainPsi(&(myicsa->plPsi), filename);	
@@ -705,6 +824,12 @@ int sizeIntIndex(void *index, size_t *numBytes) {
 		size +=myicsa->hcPsi.totalMem;	 	
 	#endif	
 
+	#ifdef PSI_R3CLS_GAPS
+		size+= myicsa->psi_obj->getPsiTotalMem();
+	#endif
+		
+
+
 	#ifdef PSI_PLAIN
 		size +=myicsa->plPsi.totalMem;	 	
 	#endif
@@ -755,6 +880,10 @@ int loadIntIndex(const char *pathname, void **index){
 	fprintf(stderr,"... into loadIntIndex........\n");
 	fprintf(stderr,"Number of indexed elements (suffix array size) = %u\n", suffixArraySize);
 	
+	read_err=read(file, myicsa->psitypes, 3*sizeof(uint));	
+	//read_err=read(file, myicsa->psitypes_ops, 3*sizeof(uint));	
+	fprintf(stderr,"...    : psi_types ={%u,%u,%u}\n", myicsa->psitypes[0], myicsa->psitypes[1], myicsa->psitypes[2]) ;
+	
 	// LEEMOS OS DATOS DO FICHEIRO QUE ALMACENA PSI COMPRIMIDA	
 	strcpy(filename, basename);
 	strcat(filename, ".");
@@ -779,6 +908,11 @@ int loadIntIndex(const char *pathname, void **index){
 		myicsa->hcPsi = loadPsiR3Hybrid(filename);	 	
 	#endif	
 
+	#ifdef PSI_R3CLS_GAPS
+		myicsa->psi_obj =  psi_rep::psi_load(filename);
+		
+	#endif
+		
 	#ifdef PSI_PLAIN
 		myicsa->plPsi = loadPlainPsi(filename);	 		
 	#endif
@@ -960,7 +1094,8 @@ int loadIntIndex(const char *pathname, void **index){
 	read_err=read(file, &(myicsa->T_Psi), sizeof(uint));
 	fprintf(stderr,"Sampling Period PSI is = %d\n", myicsa->T_Psi);	
 
-	printPsiIndexType(myicsa->T_Psi);
+	printPsiIndexType(myicsa->T_Psi, myicsa->psitypes);
+
 	
 	close(file);
 	free(filename);
@@ -1011,6 +1146,11 @@ int freeIntIndex(void *index) {
 	#ifdef PSI_R3HYBRID
 		total+= totaltmp = myicsa->hcPsi.totalMem;
 		destroyPsiR3Hybrid(&(myicsa->hcPsi));
+	#endif
+
+	#ifdef PSI_R3CLS_GAPS
+		total+= totaltmp = myicsa->psi_obj->getPsiTotalMem();
+		delete (psi_rep *) myicsa->psi_obj;
 	#endif
 
 	#ifdef PSI_PLAIN
@@ -1093,6 +1233,10 @@ int printInfoIntIndex(void *index, const char tab[]) {
 	#endif
 	#ifdef PSI_R3HYBRID
 		totalpsi = myicsa->hcPsi.totalMem;
+	#endif
+
+	#ifdef PSI_R3CLS_GAPS
+		totalpsi = myicsa->psi_obj->getPsiTotalMem();
 	#endif
 
 	#ifdef PSI_PLAIN
@@ -1198,6 +1342,30 @@ int printInfoIntIndex(void *index, const char tab[]) {
 	#endif
 
 
+	#ifdef PSI_R3CLS_GAPS
+		unsigned long sizesPSIQuartil[3];
+		unsigned long sizesPSIAcummQuartil[3];
+		size_t n = myicsa->suffixArraySize;
+
+		sizesPSIAcummQuartil[0] = myicsa->psi_obj->getPsiSizeBitsUptoPosition(n/3);
+		sizesPSIAcummQuartil[1] = myicsa->psi_obj->getPsiSizeBitsUptoPosition(2*n/3);
+		sizesPSIAcummQuartil[2] = myicsa->psi_obj->getPsiSizeBitsUptoPosition(n-1);
+	
+		sizesPSIQuartil[0] = myicsa->psi_obj->getPsiSizeBitsUptoPosition(n/3);
+		sizesPSIQuartil[1] = myicsa->psi_obj->getPsiSizeBitsUptoPosition(2*n/3) - sizesPSIAcummQuartil[0];
+		sizesPSIQuartil[2] = myicsa->psi_obj->getPsiSizeBitsUptoPosition(n-1)   - sizesPSIAcummQuartil[1];
+	
+		sizesPSIQuartil[0] /=8;  //(in bytes);
+		sizesPSIQuartil[1] /=8;  //(in bytes);
+		sizesPSIQuartil[2] /=8;  //(in bytes);
+
+		sizesPSIAcummQuartil[0] /=8;  //(in bytes);
+		sizesPSIAcummQuartil[1] /=8;  //(in bytes);
+		sizesPSIAcummQuartil[2] /=8;  //(in bytes);
+	#endif
+		
+
+
 	#ifdef PSI_PLAIN
 		unsigned long getPlainPsiSizeBitsUptoPosition (PlainPsi *plPsi, size_t position);
 		unsigned long sizesPSIQuartil[3];
@@ -1239,7 +1407,7 @@ int printInfoIntIndex(void *index, const char tab[]) {
 	
 	size_t nbytes; sizeIntIndex(index, &nbytes); //whole self-index
 	
-	printf("\n ===================================================:");		
+	printf("\n%s ===================================================:",tab);		
 	printf("\n%sSummary Self-index on integers (icsa) layer:",tab);		
 	printf("\n%s   icsa structure = %zu bytes",tab, structure);
 	printf("\n%s    psi          = %10zu bytes",tab, totalpsi);
@@ -1257,8 +1425,7 @@ int printInfoIntIndex(void *index, const char tab[]) {
 	printf("\n%sTotal = ** %zu bytes (in RAM) ** ",tab, nbytes);
 	printf("\n");
 	
-	printf("\n ===================================================:");		
-	printf("\n ===================================================:");		
+	printf("\n%s ===================================================:",tab);		
 	printf("\n%sSummary Self-index on integers (PSI) :",tab);		
 	printf("\n%s   icsa structure = %zu bytes",tab, structure);
 	printf("\n%s   psi         = %10zu bytes",tab, totalpsi);
@@ -1283,6 +1450,13 @@ int printInfoIntIndex(void *index, const char tab[]) {
 		printf("\n%s  psi ... Size at pos psi[T3  (66-100%%)]  = %10zu bytes (accum = %10zu bytes)",tab, (size_t) sizesPSIQuartil[2], sizesPSIAcummQuartil[2]);
 	#endif
 
+	#ifdef PSI_R3CLS_GAPS
+		printf("\n%s  psi ... Size at pos psi[T1  (00-33%%)]   = %10zu bytes (accum = %10zu bytes)",tab, (size_t) sizesPSIQuartil[0], sizesPSIAcummQuartil[0]);
+		printf("\n%s  psi ... Size at pos psi[T2  (33-66%%)]   = %10zu bytes (accum = %10zu bytes)",tab, (size_t) sizesPSIQuartil[1], sizesPSIAcummQuartil[1]);
+		printf("\n%s  psi ... Size at pos psi[T3  (66-100%%)]  = %10zu bytes (accum = %10zu bytes)",tab, (size_t) sizesPSIQuartil[2], sizesPSIAcummQuartil[2]);	
+	#endif
+	
+
 	#ifdef PSI_PLAIN
 		printf("\n%s  psi ... Size at pos psi[T1  (00-33%%)]   = %10zu bytes (accum = %10zu bytes)",tab, (size_t) sizesPSIQuartil[0], sizesPSIAcummQuartil[0]);
 		printf("\n%s  psi ... Size at pos psi[T2  (33-66%%)]   = %10zu bytes (accum = %10zu bytes)",tab, (size_t) sizesPSIQuartil[1], sizesPSIAcummQuartil[1]);
@@ -1291,8 +1465,7 @@ int printInfoIntIndex(void *index, const char tab[]) {
 
 	
 	
-	printf("\n ===================================================:");		
-	printf("\n ===================================================:");		
+	printf("\n%s ===================================================:",tab);		
 	
 	return 0; //no error.
 }
@@ -2025,7 +2198,7 @@ unsigned int countCSABin(ticsa *myicsa, uint *pattern, uint patternSize, uint *l
 /*******************************************************************************/
 
 //finds the range [left-right] in a zone of increasing values of psi[left-right], such 
-//that for any $i \in [left-right] $, psi(i) maps into [tl,tr] 
+//that for any $i \in [left-right] $, psi(psi(i)) maps into [tl,tr] 
 //no improvements... binary searches access psi at any (sampled/no-sampled) positions.
 int binSearchPsiPsiTarget(void *index, ulong *left, ulong *right, ulong *numocc, ulong tl, ulong tr){	
 
@@ -2068,6 +2241,153 @@ int binSearchPsiPsiTarget(void *index, ulong *left, ulong *right, ulong *numocc,
 	*numocc = r-l+1;
 	return 0;
 }
+
+
+
+/* returns in numocc=0 if no left was found, 
+ * otherwise returns in numocc the value of 1+ psi(psi(*left))
+ * 
+ * */
+
+//#define WITHEXPSEARCH_PSIPSITARGET3 
+    //commented by default because the exponential search proved *TOO COSTLY* in our tests.
+    //anyway you can uncomment previous define to enable the "exponential search step" below.
+int expSearchPsiPsiTarget_leftOnly(void *index, ulong *left, ulong *right, ulong *numocc, ulong tl, ulong tr) {
+
+	ticsa *myicsa = (ticsa *) index;
+	register unsigned long l, r, p, psi_p;
+	l=*left; r=*right;
+	
+	// looks for left limit	
+	
+#ifdef WITHEXPSEARCH_PSIPSITARGET3	
+		//exponential search step
+		{
+			unsigned long ll =l;
+			unsigned long step =1;
+			unsigned long prevll=ll;
+			while (ll<r) {
+				psi_p= getPsiicsa(myicsa, ll);
+				psi_p= getPsiicsa(myicsa, psi_p);		
+				if (psi_p <tl) {prevll=ll; step *=2; ll+=step;	}
+				else {r=ll; l=prevll; break;}				
+			}
+		}
+#endif
+	
+	
+	//now bin-search between l and r.
+	
+	while(l < r) {
+		p = (l+r)/2; 
+		psi_p= getPsiicsa(myicsa, p);
+		psi_p= getPsiicsa(myicsa, psi_p);		
+		if (psi_p >= tl) r = p;
+		else l = p+1;
+	}
+	// If there is no $i \in [*left, *right] such that psi(i)\in [tl,tr]$  we are done with no matches.
+//	if (psi_p == 2133228932) { ;}
+	psi_p= getPsiicsa(myicsa, r);	
+	psi_p= getPsiicsa(myicsa, psi_p);		
+	if( (tl>psi_p) || (tr<psi_p)) {
+		*left = l; *right = r; *numocc = 0;
+		return 0;
+	}
+	// Left limit is saved.
+	*left = r;
+	*numocc = psi_p +1;  //<<-- value of \psi\psi(*left) +1  (+1 to ensure 0 is not returned);
+	return 1;	
+}
+
+
+
+/*******************************************************************************/
+
+//finds the range [left-right] in a zone of increasing values of psi[left-right], such 
+//that for any $i \in [left-right] $, psi(psi(i)) maps into [tl,tr] 
+//no improvements... exponential searches access psi at any (sampled/no-sampled) positions.
+int expSearchPsiPsiTarget(void *index, ulong *left, ulong *right, ulong *numocc, ulong tl, ulong tr){	
+
+	ticsa *myicsa = (ticsa *) index;
+	register unsigned long l, r, p, psi_p;
+	l=*left; r=*right;
+	
+	// looks for left limit	
+	
+	
+		//exponential search step
+		{
+			unsigned long ll =l;
+			unsigned long step =1;
+			unsigned long prevll=ll;
+			while (ll<r) {
+				psi_p= getPsiicsa(myicsa, ll);
+				psi_p= getPsiicsa(myicsa, psi_p);		
+				if (psi_p <tl) {prevll=ll; step *=2; ll+=step;	}
+				else {r=ll; l=prevll; break;}				
+			}
+		}
+
+	
+	
+	//now bin-search between l and r.
+	
+	while(l < r) {
+		p = (l+r)/2; 
+		psi_p= getPsiicsa(myicsa, p);
+		psi_p= getPsiicsa(myicsa, psi_p);		
+		if (psi_p >= tl) r = p;
+		else l = p+1;
+	}
+	// If there is no $i \in [*left, *right] such that psi(i)\in [tl,tr]$  we are done with no matches.
+	psi_p= getPsiicsa(myicsa, r);
+	psi_p= getPsiicsa(myicsa, psi_p);		
+	if( (tl>psi_p) || (tr<psi_p)) {
+		*left = l; *right = r; *numocc = 0;
+		return 0;
+	}
+	// Left limit is saved.
+	*left = r;
+
+	// now finds right limit   (we know at least 1 match occurs if we arrived here).
+	l = r;     //start from previous position
+	r = *right;
+	
+		//exponential search step
+		{
+			unsigned long ll =l;
+			unsigned long step =1;
+			unsigned long prevll=ll;
+			while (ll<r) {
+				psi_p= getPsiicsa(myicsa, ll);
+				psi_p= getPsiicsa(myicsa, psi_p);		
+				if (psi_p <=tr) {prevll=ll; step *=2; ll+=step;	}
+				else {r=ll-1; break;}				
+			}
+			l=prevll;
+		}
+	
+	//now bin-search between l and r.
+	while(l < r) {
+		p = (l+r+1)/2;
+		psi_p= getPsiicsa(myicsa, p);
+		psi_p= getPsiicsa(myicsa, psi_p);		
+		if (psi_p <= tr) l=p;
+		else r = p-1;	
+	}
+	
+	// Gardamos o limite dereito
+	*right = l;		
+	*numocc = r-l+1;
+	return 0;
+}
+
+
+
+
+
+
+
 
 
 
@@ -2118,6 +2438,538 @@ int binSearchPsiTarget(void *index, ulong *left, ulong *right, ulong *numocc, ul
 }
 
 
+
+
+
+/*******************************************************************************/
+
+//finds the range [left-right] in a zone of increasing values of psi[left-right], such 
+//that for any $i \in [left-right] $, psi(i) maps into [tl,tr] 
+//no improvements... exponential searches access psi at any (sampled/no-sampled) positions.
+int expSearchPsiTarget(void *index, ulong *left, ulong *right, ulong *numocc, ulong tl, ulong tr){	
+
+	ticsa *myicsa = (ticsa *) index;
+	register unsigned long l, r, p, psi_p;
+	l=*left; r=*right;
+	
+	// looks for left limit	
+	
+		//exponential search step
+		{
+			unsigned long ll =l;
+			unsigned long step =1;
+			unsigned long prevll=ll;
+			while (ll<r) {
+				psi_p= getPsiicsa(myicsa, ll);
+				if (psi_p <tl) {prevll=ll; step *=2; ll+=step;	}
+				else {r=ll; l=prevll; break;}				
+			}
+		}
+
+//	printf("\n** STEP 1 %lu, %lu", l,r);
+
+	
+	//now bin-search between l and r.
+	
+	while(l < r) {
+		p = (l+r)/2; 
+		psi_p= getPsiicsa(myicsa, p);
+		if (psi_p >= tl) r = p;
+		else l = p+1;
+	}
+	// If there is no $i \in [*left, *right] such that psi(i)\in [tl,tr]$  we are done with no matches.
+//printf("\n** STEP 2 %lu, %lu", l,r);  fflush(stdout);
+//printf("\n** STEP 2 -- target = [%lu, %lu]" ,tl,tr);
+//printf("\n** STEP 2 --  getPsiicsa(myicsa, l-1) = %lu, getPsiicsa(myicsa, l) = %lu", getPsiicsa(myicsa, l-1), getPsiicsa(myicsa, l));  fflush(stdout);
+
+	psi_p= getPsiicsa(myicsa, r);
+	if( (tl>psi_p) || (tr<psi_p)) {
+		*left = l; *right = r; *numocc = 0;
+		return 0;
+	}
+	// Left limit is saved.
+	*left = r;
+	
+//printf("\n** STEP 3 %lu, %lu", l,r);  fflush(stdout);
+	// now finds right limit   (we know at least 1 match occurs if we arrived here).
+	l = r;     //start from previous position
+	r = *right;
+	
+		//exponential search step
+		{
+			unsigned long ll =l;
+			unsigned long step =1;
+			unsigned long prevll=ll;
+			while (ll<r) {
+				psi_p= getPsiicsa(myicsa, ll);
+				if (psi_p <=tr) {prevll=ll; step *=2; ll+=step;	}
+				else {r=ll-1; break;}				
+			}
+			l=prevll;
+		}
+
+	
+	//now bin-search between l and r.
+	while(l < r) {
+		p = (l+r+1)/2;
+		psi_p= getPsiicsa(myicsa, p);
+		if (psi_p <= tr) l=p;
+		else r = p-1;	
+	}
+	
+	// Gardamos o limite dereito
+	*right = l;		
+	*numocc = r-l+1;
+	return 0;
+}
+
+
+
+// if not defined --> works as binSearchPsiTarget_samplesFirst. 
+// otherwise performs a exponential search before the 1st and 2nd binary search/es.
+
+//#define WITHEXPSEARCH1
+//#define WITHEXPSEARCH2
+
+//#define VERBOSEEXPSEARCH
+
+
+//finds the range [left-right] in a zone of increasing values of psi[left-right], such 
+//that for any $i \in [left-right] $, psi(i) maps into [tl,tr] 
+//optimizes the search by taking advantage of accessing sampled psi positions first 
+//(at positions i = k *myicsa->T_Psi )
+//it uses getFindPsiicsa to locate left/right in a zone psi[x,y]... those psi values are
+//sequentially decompressed but not stored anywhere
+int expSearchPsiTarget_samplesFirst(void *index, ulong *left, ulong *right, ulong *numocc, ulong tl, ulong tr){	
+	#ifdef VERBOSEEXPSEARCH
+		static unsigned long veces =0;
+		veces++;
+	#endif
+
+	ticsa *myicsa = (ticsa *) index;
+	register uint tpsi = myicsa->T_Psi;
+	
+
+	register unsigned long l, r, sl, sr, p;
+	l=*left; r=*right;
+		
+	sl=l/tpsi * tpsi; 
+	sr=r/tpsi * tpsi;
+/*
+if (sr-sl < 16*tpsi) {	
+	
+		ulong i1,i2;		
+		int ipos= getFindPsiicsa(myicsa,l,r,tl,tr,&i1,&i2);
+		if (ipos==0) {
+			*left =l; *right=l; *numocc =0; return 0;
+		}
+		if (ipos>=1) {
+			*left= l+i1; *right=l+i2; *numocc = (*right - *left +1); return 0;			
+		}	
+}	
+*/	
+	//no sample in [l,r] --------------------
+	if ( (sl<l) && (sr<l)) {
+
+		
+		ulong i1,i2;		
+		int ipos= getFindPsiicsa(myicsa,l,r,tl,tr,&i1,&i2);
+		if (ipos==0) {
+			*left =l; *right=l; *numocc =0; return 0;
+		}
+		if (ipos>=1) {
+			*left= l+i1; *right=l+i2; *numocc = (*right - *left +1); return 0;			
+		}
+		
+	}
+	
+	//only 1 sample in [l,r] --------------------
+	else if ( ((sl<l) && (sr == (sl+tpsi)))  || ((sl ==l) && (sr==sl)) ) {
+
+		if (sl==sr){   //l == sl == sr.
+			p= getPsiicsa(myicsa, sl);    //sampled pos.
+			int cmp = cmptarget(p,tl,tr);
+			if ( cmp ==0 ) {
+
+				ulong i1,i2;		
+				int ipos= getFindPsiicsa(myicsa,l,r,tl,tr,&i1,&i2);
+				if (ipos==0) {
+					*left =l; *right=l; *numocc =0; return 0;
+				}
+				if (ipos>=1) {
+					*left= l; *right=l+i2; *numocc = (*right - *left +1); return 0;			
+				}
+
+			}
+			else if ( cmp>0 ) {
+				*left =l; *right=l; *numocc =0; return 0;			
+			}
+			else { // (cmp <0)
+
+				ulong i1,i2;		
+				int ipos= getFindPsiicsa(myicsa,l,r,tl,tr,&i1,&i2);
+				if (ipos==0) {
+					*left =l; *right=l; *numocc =0; return 0;
+				}
+				if (ipos>=1) {
+					*left= l+i1; *right=l+i2; *numocc = (*right - *left +1); return 0;			
+				}		
+					
+			}
+		}
+		
+		else {  //sl <l   && sr=sl+tpsi
+			p= getPsiicsa(myicsa, sr);    //sampled pos.
+			if (p > tr) r=sr-1;
+
+			ulong i1,i2;		
+			int ipos= getFindPsiicsa(myicsa,l,r,tl,tr,&i1,&i2);
+			if (ipos==0) {
+				*left =l; *right=l; *numocc =0; return 0;
+			}
+			if (ipos>=1) {
+				*left= l+i1; *right=l+i2; *numocc = (*right - *left +1); return 0;			
+			}
+					
+		}
+	}
+
+		
+	// 2+ samples in [l,r] --------------------
+	//else 2+ samples en [l,r]
+	else {
+		int checkedleft=0;
+		if (sl < l) {
+			sl+=tpsi;
+			p= getPsiicsa(myicsa, sl);
+			if (p >tl) {
+				checkedleft=1;
+								
+				ulong i1,i2;		
+				int ipos= getFindPsiicsa(myicsa,l,sl,tl,tr,&i1,&i2);
+				if (ipos==0) {
+					*left =l; *right=l; *numocc =0; return 0;
+				}
+				if (ipos>=1) {
+					*left= l+i1; 
+					if (p>tr) {
+						*right=l+i2; *numocc = (*right - *left +1); return 0;			
+					}
+					//else /* left already established and checkedleft==1 from here on.
+				}
+														
+			}				
+		}
+		
+		ulong ll,rr;
+		l=sl;  // now check for *right (and maybe *left) from sl on...
+		       // l starts in a sampled position "sl"
+		
+		//--- looks for right in [l=sl,r --------------------------------------
+		
+		//case 1.. right should be after the last sample.
+		if (cmptarget(getPsiicsa(myicsa, sr),tl,tr) <=0) {
+			
+			ulong i1,i2;		
+			int ipos= getFindPsiicsa(myicsa,sr,r,tl,tr,&i1,&i2);
+			if (ipos==0) {
+				*left =sr; *right=sr; *numocc =0; return 0;
+			}
+			if (ipos>=1) {
+				*right=sr+i2;			
+			}
+			
+	
+		}		
+		else {//case 2... binary search
+			
+			
+			r=sr;  //r=sr-1 actually ... hence looking for *right in [sl..sr]
+			
+			//binary search on the samples.			
+			ll=l;rr=sr;
+			assert(ll%tpsi == 0); assert(rr%tpsi == 0);
+					
+
+#ifdef WITHEXPSEARCH1
+//SHOULD USE EXPONENTIAL SEARCH HERE. 
+	#ifdef VERBOSEEXPSEARCH
+			printf("\n [%lu ]before exp-search (1): ll,rr = [%lu,%lu] --> ",veces, ll,rr);
+	#endif
+			////////////////////
+			//exponential search step: we are looking for right point.
+			// moves ll forward.
+			////////////////////
+			if (ll< rr-tpsi) // non consecutive samples ==> exp search
+			{	unsigned long psi_p;
+				unsigned long step =1*tpsi;
+				unsigned long prevll=ll;
+				
+				while (ll<rr) {
+					p=ll;
+					psi_p= getPsiicsa(myicsa, p);
+					if (cmptarget(psi_p,tl,tr) <=0) {
+						prevll=ll; ll+=step; step *=2;
+					}
+					else {break;}				
+				}
+				ll=prevll;
+			}	
+			////////////////////
+			// now the usual binary search between ll and rr.
+			////////////////////			
+	#ifdef VERBOSEEXPSEARCH
+			printf("after [%lu,%lu].",ll,rr);
+	#endif	
+#endif
+										
+
+			ulong prevp=0;		
+							//printf("\n ll=%lu, p= %lu, rr=%lu, prevp=%lu: cmptarget = %d",ll,((ll+rr)/2 /tpsi * tpsi),rr,prevp,cmptarget(getPsiicsa(myicsa, ((ll+rr)/2 /tpsi * tpsi)),tl,tr));
+			while (ll<rr) {  // ll and rr should be multiples of tpsi								
+				p = ((ll+rr)/2 /tpsi * tpsi);
+							//printf("\n ll=%lu, p= %lu, rr=%lu, prevp=%lu: cmptarget = %d",ll,p,rr,prevp,cmptarget(getPsiicsa(myicsa, p),tl,tr));
+				if (p==prevp) break;
+							assert(p%tpsi == 0);
+				if (cmptarget(getPsiicsa(myicsa, p),tl,tr) <=0) 
+					ll=p;
+				else
+					rr=p-tpsi;
+				
+				prevp=p;	
+
+			}
+			
+			
+			
+			if ((rr > ll) && (cmptarget(p=getPsiicsa(myicsa, rr),tl,tr) <=0)) {
+				// rr could be <ll if p == ll and rr=p+tpsi and cmptarget (ll) > 0 in the previous iteration
+				// therefore we set rr = p-tpsi	... and the loop ends because ll>rr			
+				sr=rr;
+			}
+			else {
+				sr=ll; p=getPsiicsa(myicsa, sr);
+			}
+#ifdef WITHEXPSEARCH1
+	#ifdef VERBOSEEXPSEARCH
+			printf("  ==>  after binsearch = [%lu,%lu]..",ll,rr);
+	#endif
+#endif
+			//printf("\n final sr= %lu, and psi(sr) = %lu",sr,p);fflush(stdout);
+			
+			if (cmptarget(p,tl,tr) >0) {   //todos los samples >tr --> no match.
+				*left =sr; *right=sr; *numocc =0; return 0;
+			}
+			else {   // cmptarget(p,tl,tr) <=0)... 
+			         // si hay un ==0, ese es right, otherwise no existe right (ni left)
+			    
+			    ulong end = ( (sr+tpsi < r) ? sr+tpsi : r );
+			    
+
+				ulong i1,i2;		
+				int ipos= getFindPsiicsa(myicsa,sr,end,tl,tr,&i1,&i2);
+				if (ipos==0) {
+					*left =sr; *right=sr; *numocc =0; return 0;
+				}
+				if (ipos>=1) {
+					*right=sr+i2;
+					
+						//if *left must BE within the uncompressed psi values... 
+						//--> search sequentially in B[0..i], so we avoid the 
+						//                         binary search for it below
+						//note that cmptarget(B[i],tl,tr) ==0 at this point.				
+						if ((checkedleft==0) && (cmptarget(p, tl, tr)<0)) {
+							*left = sr+i1;
+							*numocc = (*right - *left +1); return 0;			
+						}
+					 
+				}
+
+			}
+		}	
+		
+		
+		// IF YOU REACHED HERE, *right is already known.
+		// LEFT is unknown (but within [sl,*right]) if checkleft==0.
+		// LEFT is known if (checkleft==1).
+		
+		//-----------------
+		if (checkedleft == 0) {  // buscar *left en [sl,*right];
+
+
+
+
+			r= *right;
+			ll= sl; rr = r/tpsi * tpsi;
+			
+#ifdef WITHEXPSEARCH2
+//SHOULD USE EXPONENTIAL SEARCH HERE. 
+	#ifdef VERBOSEEXPSEARCH
+			printf("\n [%lu ]before exp-search (2): ll,rr = [%lu,%lu] --> ",veces, ll,rr);
+	#endif			
+			////////////////////
+			//exponential search step : we are looking for left point.
+			// moves ll forward, and shortens rr if possible.
+			////////////////////
+			if (ll< rr-tpsi) // non consecutive samples ==> exp search 
+			{	unsigned long psi_p;
+				unsigned long step =1*tpsi;
+				unsigned long prevll=ll;
+				
+				while (ll<rr) {
+					p=ll;
+					psi_p= getPsiicsa(myicsa, p);
+					int comparison = cmptarget(psi_p,tl,tr);
+					if (comparison <0) {
+						prevll=ll; ll+=step; step *=2;
+					}
+					else {	
+						if (comparison >0) rr=ll;			
+						//commented because as *right is already found/known before entering the
+						//exponential search, then rr won't change ever here.
+						//rr = (rr <= ll) ? rr : ll+tpsi;
+						break;
+					}				
+				}
+				ll=prevll;
+			}	
+			////////////////////
+			// now the usual binary search between ll and rr.
+			////////////////////
+
+	#ifdef VERBOSEEXPSEARCH	
+			printf("after = [%lu,%lu]..",ll,rr);
+	#endif			
+#endif						
+			
+			while (ll < rr) {
+				p = ((ll+rr)/2 /tpsi * tpsi);
+				if (cmptarget(getPsiicsa(myicsa, p),tl,tr) >=0) 
+					rr=p;
+				else
+					ll=p+tpsi;				
+			}
+			
+			p=rr;
+			assert(p%tpsi == 0);			
+			if ((p>sl) &&  (cmptarget(getPsiicsa(myicsa, p),tl,tr) >=0) ) {
+				p-=tpsi;   //p--;
+			}
+
+#ifdef WITHEXPSEARCH2
+	#ifdef VERBOSEEXPSEARCH
+			printf("  ==>  after binsearch = [%lu,%lu]..",ll,rr);
+	#endif
+#endif
+			
+			if (cmptarget(getPsiicsa(myicsa,p),tl,tr) ==0) {
+				*left = p;
+			}
+			else if (cmptarget(getPsiicsa(myicsa, p),tl,tr) <0) {
+				sl =p;
+				ulong end = ( (sl+tpsi < r) ? sl+tpsi : r );
+				
+
+				ulong i1,i2;		
+				int ipos= getFindPsiicsa(myicsa,sl,end,tl,tr,&i1,&i2);
+				if (ipos==0) {
+					*left =sl; *right=sl; *numocc =0; return 0;
+				}
+				if (ipos>=1) {
+					*left= sl+i1;			
+				}
+								
+			}
+			else { //cmptarget(getPsiicsa(myicsa, p),tl,tr) >0)
+				*left =sl; *right=sl; *numocc =0; return 0;
+			}
+		}
+		
+		//else //left was set before;
+		*numocc = *right -*left +1;		
+	}//end 2+samples
+		
+	return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 //cheks if p falls int [tl,tr].
 //returns -1 if p<tl, +1 if p>tr, 0 if p \in [tl,tr]
 int cmptarget(ulong p, ulong tl, ulong tr) {
@@ -2131,7 +2983,8 @@ int cmptarget(ulong p, ulong tl, ulong tr) {
 //that for any $i \in [left-right] $, psi(i) maps into [tl,tr] 
 //optimizes the search by taking advantage of accessing sampled psi positions first 
 //(at positions i = k *myicsa->T_Psi )
-int binSearchPsiTarget_samplesFirst_BUFFER(void *index, ulong *left, ulong *right, ulong *numocc, ulong tl, ulong tr){	
+int binSearchPsiTarget_samplesFirst_BUFFER(void *index, ulong *left, ulong *right, 
+										 ulong *numocc, ulong tl,    ulong tr){	
 
 	ticsa *myicsa = (ticsa *) index;
 	register uint tpsi = myicsa->T_Psi;
@@ -2580,17 +3433,16 @@ int binSearchPsiTarget_samplesFirst(void *index, ulong *left, ulong *right, ulon
 			
 			//binary search on the samples.			
 			ll=l;rr=sr;
-			assert(ll%tpsi == 0);
-			assert(rr%tpsi == 0);
+			assert(ll%tpsi == 0); assert(rr%tpsi == 0);
 					
 
 			ulong prevp=0;		
-			//printf("\n ll=%lu, p= %lu, rr=%lu, prevp=%lu: cmptarget = %d",ll,((ll+rr)/2 /tpsi * tpsi),rr,prevp,cmptarget(getPsiicsa(myicsa, ((ll+rr)/2 /tpsi * tpsi)),tl,tr));
+							//printf("\n ll=%lu, p= %lu, rr=%lu, prevp=%lu: cmptarget = %d",ll,((ll+rr)/2 /tpsi * tpsi),rr,prevp,cmptarget(getPsiicsa(myicsa, ((ll+rr)/2 /tpsi * tpsi)),tl,tr));
 			while (ll<rr) {  // ll and rr should be multiples of tpsi								
 				p = ((ll+rr)/2 /tpsi * tpsi);
-				//printf("\n ll=%lu, p= %lu, rr=%lu, prevp=%lu: cmptarget = %d",ll,p,rr,prevp,cmptarget(getPsiicsa(myicsa, p),tl,tr));
+							//printf("\n ll=%lu, p= %lu, rr=%lu, prevp=%lu: cmptarget = %d",ll,p,rr,prevp,cmptarget(getPsiicsa(myicsa, p),tl,tr));
 				if (p==prevp) break;
-				assert(p%tpsi == 0);
+							assert(p%tpsi == 0);
 				if (cmptarget(getPsiicsa(myicsa, p),tl,tr) <=0) 
 					ll=p;
 				else
@@ -2965,7 +3817,10 @@ int binSearchPsiTarget_samplesFirst_buffer_not_used(void *index, ulong *left, ul
 
 
 
-
+uint getTPSI_value(void *index) {
+	ticsa *myicsa = (ticsa *) index;
+	return myicsa->T_Psi;
+}
 
 
 
@@ -3096,7 +3951,7 @@ uint getPsiicsa(void *index, uint i) {
 		#ifdef PSI_GONZALO
 			positionAux=getGonzaloPsiValue(&(myicsa->gcPsi), i);
 		#endif
-		#ifdef PSI_DELTACODES
+		#ifdef PSI_DELTACODES61
 			positionAux=getDeltaPsiValue(&(myicsa->dcPsi), i);
 		#endif	
 		#ifdef PSI_VBYTERLE
@@ -3107,7 +3962,10 @@ uint getPsiicsa(void *index, uint i) {
 		#endif		
 		#ifdef PSI_R3HYBRID
 			positionAux=getPsiR3HybridValue(&(myicsa->hcPsi), i );
-		#endif		
+		#endif				
+		#ifdef PSI_R3CLS_GAPS
+			positionAux= myicsa->psi_obj->getPsiValue(i); //  getPsiR3HybridValue(&(myicsa->hcPsi), i );
+		#endif				
 		#ifdef PSI_PLAIN
 			positionAux=getPlainPsiValue(&(myicsa->plPsi), i );
 		#endif
@@ -3137,12 +3995,196 @@ void getPsiBuffericsa(void *index, uint *buffer, size_t ini, size_t end) {
 		#ifdef PSI_R3HYBRID
 			getPsiR3HybridValueBuffer(&(myicsa->hcPsi), buffer,ini,end);
 		#endif		
+		#ifdef PSI_R3CLS_GAPS
+			//codigo here
+			myicsa->psi_obj->getPsiValueBuffer(buffer,ini,end);//   getPsiR3HybridValueBuffer(&(myicsa->hcPsi), buffer,ini,end);
+		#endif				
 		#ifdef PSI_PLAIN
 			getPlainPsiValueBuffer(&(myicsa->plPsi), buffer,ini,end);
 		#endif
 			 
 	return;
 }
+
+
+
+
+
+
+// 	//initilization, and loading of the 1st buffer (returns no uint value).
+// 	void get_one_icsa_init(void *index, uint *buffer, size_t l, size_t r) {
+// 		ticsa *myicsa = (ticsa *) index;
+// 		//	#ifdef PSI_HUFFMANRLE
+// 		//		getHuffmanPsiValueBuffer(&(myicsa->hcPsi), buffer,ini,end);
+// 		//	#endif			 
+// 		//	#ifdef PSI_GONZALO
+// 		//		getGonzaloPsiValueBuffer(&(myicsa->gcPsi), buffer,ini,end);
+// 		//	#endif
+// 		//	#ifdef PSI_DELTACODES
+// 		//		getDeltaPsiValueBuffer(&(myicsa->dcPsi), buffer,ini,end);
+// 		//	#endif	
+// 		//	#ifdef PSI_VBYTERLE
+// 		//		getVbytePsiValueBuffer(&(myicsa->vbPsi), buffer,ini,end);
+// 		//	#endif			
+// 		//	#ifdef PSI_R3H
+// 		//		getPsiR3HValueBuffer(&(myicsa->hcPsi), buffer,ini,end);
+// 		//	#endif		
+// 		//	#ifdef PSI_R3HYBRID
+// 		//		getPsiR3HybridValueBuffer(&(myicsa->hcPsi), buffer,ini,end);
+// 		//	#endif		
+// 			#ifdef PSI_R3CLS_GAPS
+// 				//codigo here
+// //				myicsa->psi_obj->get_one_psi_init(buffer,l,r);
+// 			#endif				
+// 		//	#ifdef PSI_PLAIN
+// 		//		getPlainPsiValueBuffer(&(myicsa->plPsi), buffer,ini,end);
+// 		//	#endif		
+// 	}
+// 
+// 	//returns an uint. zero if \Psi[r] was already returned previousle (interval exhausted).
+// 	uint get_one_icsa_next(void *index) {
+// 		ticsa *myicsa = (ticsa *) index;
+// 		//	#ifdef PSI_HUFFMANRLE
+// 		//		getHuffmanPsiValueBuffer(&(myicsa->hcPsi), buffer,ini,end);
+// 		//	#endif			 
+// 		//	#ifdef PSI_GONZALO
+// 		//		getGonzaloPsiValueBuffer(&(myicsa->gcPsi), buffer,ini,end);
+// 		//	#endif
+// 		//	#ifdef PSI_DELTACODES
+// 		//		getDeltaPsiValueBuffer(&(myicsa->dcPsi), buffer,ini,end);
+// 		//	#endif	
+// 		//	#ifdef PSI_VBYTERLE
+// 		//		getVbytePsiValueBuffer(&(myicsa->vbPsi), buffer,ini,end);
+// 		//	#endif			
+// 		//	#ifdef PSI_R3H
+// 		//		getPsiR3HValueBuffer(&(myicsa->hcPsi), buffer,ini,end);
+// 		//	#endif		
+// 		//	#ifdef PSI_R3HYBRID
+// 		//		getPsiR3HybridValueBuffer(&(myicsa->hcPsi), buffer,ini,end);
+// 		//	#endif		
+// 			#ifdef PSI_R3CLS_GAPS
+// 				//codigo here
+// //				return myicsa->psi_obj->get_one_psi_next();
+// 			#endif				
+// 		//	#ifdef PSI_PLAIN
+// 		//		getPlainPsiValueBuffer(&(myicsa->plPsi), buffer,ini,end);
+// 		//	#endif		
+// 	}
+
+
+
+
+/******************************************************************************/
+/* IMPLEMENTATION OF CLASS psi_rep_iterator */
+
+//2023- dual  (called from BuildFacade:: get_one_dual_init() and get_one_dual_next().
+// allow to sequentially recover \Psi[i], i \in [l,r].
+// decodes data into a buffer of size [tpsi], and returns values from the buffer
+// when a buffer gets empty, the next tpsi values (are loaded into the buffer),
+// and the process continues.
+/**
+	//for supporting get_one_psi_init(buff,l,r) and get_one_psi_next();
+	size_t l, r;
+	size_t pos;  //pos within buffer
+	uint *buffer;
+	uint nb;   //number of uints in buffer
+**/
+
+uint min_of_two(uint a, uint b) {
+	if (a<b) 
+		return a;
+	return b;
+}
+
+	psi_rep_iterator::~psi_rep_iterator() {
+		if (buffer)  free(buffer);	
+	}
+
+
+
+	psi_rep_iterator::psi_rep_iterator(){
+		this->l = 0;
+		this->r = 0;
+		this->pos =0;
+		this->tpsi = 0;
+		this->nb = 0;
+		this->buffer = NULL;	
+		this->my_psi_rep = NULL;
+	}
+
+	/** Internal building function **/
+	void psi_rep_iterator::init(void *icsa, size_t left, size_t right, uint tpsi){
+		this->l = left;
+		this->r = right;
+		this->pos =0;
+		this->nb = tpsi;
+		this->tpsi = tpsi;
+		if (!this->buffer) {
+			this->buffer = (uint *) malloc (tpsi * sizeof(uint));
+		}
+
+		//now loads the first buffer.
+		ticsa *myicsa = (ticsa *) icsa;
+		this->my_psi_rep = myicsa->psi_obj;
+		
+		uint ini = (left / tpsi)* tpsi;
+		this->pos = left %tpsi;
+		uint limit = min_of_two(right, ini+tpsi-1);
+		
+		//this->my_psi_rep->getPsiValueBuffer(this->buffer,ini,limit);
+		this->my_psi_rep->getPsiValueBuffer( this->buffer +pos, ini+pos, limit);		
+		
+		this->nb = limit -ini +1;
+		
+	}
+
+
+	psi_rep_iterator * psi_rep_iterator::clone() {
+		psi_rep_iterator *it = new psi_rep_iterator ();
+		it->l = this->l;
+		it->r = this->r;
+		it->pos = this->pos;
+		it->tpsi = this->tpsi;
+		it->nb = this->nb;
+		it->buffer=NULL;
+		if (this->buffer) {
+			it->buffer = (uint *) malloc (this->tpsi * sizeof(uint));
+			memcpy(it->buffer, this->buffer, this->tpsi * sizeof(uint));
+		}
+		it->my_psi_rep= this->my_psi_rep;  //same psi_rep.
+		
+		return it;
+	}
+
+
+//returns an uint (\psi[l]) or the constant NO_MORE_VALUES_IN_PSI_RANGE if \Psi[r] was already returned previousle (interval exhausted).
+uint psi_rep_iterator::next() {
+	if (l>r) {
+		return NO_MORE_VALUES_IN_PSI_RANGE;
+	}
+
+	if (pos >= nb) {
+		//cargar nuevo buffer.
+		uint ini = l;
+		pos =0;
+		uint limit = min_of_two(r, ini+nb-1);
+		this->my_psi_rep->getPsiValueBuffer(this->buffer,ini,limit);
+		this->nb = limit -ini +1;
+				
+	}
+	l++;
+	return buffer[pos++];
+	
+}
+
+
+/******************************************************************************/
+
+
+
+
+
+
 
 //**//
 int  getFindPsiBuffericsa(void *index, uint *buffer, size_t ini, size_t end, ulong fst, ulong sec, ulong *i1, ulong *i2) {
@@ -3165,6 +4207,9 @@ int  getFindPsiBuffericsa(void *index, uint *buffer, size_t ini, size_t end, ulo
 		#ifdef PSI_R3HYBRID
 			return getfindPsiR3HybridValueBuffer(&(myicsa->hcPsi), buffer,ini,end,  fst,sec, i1,i2);
 		#endif		
+		#ifdef PSI_R3CLS_GAPS
+			return myicsa->psi_obj->getfindPsiValueBuffer(buffer,ini,end,  fst,sec, i1,i2);
+		#endif				
 		#ifdef PSI_PLAIN
 			return	getfindPlainPsiValueBuffer(&(myicsa->plPsi), buffer,ini,end,  fst,sec, i1,i2);
 		#endif
@@ -3193,6 +4238,9 @@ int getFindPsiicsa(void *index, size_t ini, size_t end, ulong fst, ulong sec, ul
 		#ifdef PSI_R3HYBRID
 			return	getfindPsiR3HybridValue(&(myicsa->hcPsi),ini,end,  fst,sec, i1,i2);
 		#endif
+		#ifdef PSI_R3CLS_GAPS
+			return myicsa->psi_obj->getfindPsiValue(ini,end,  fst,sec, i1,i2);
+		#endif				
 		#ifdef PSI_PLAIN
 			return	getfindPlainPsiValue(&(myicsa->plPsi),ini,end,  fst,sec, i1,i2);
 		#endif
@@ -3301,6 +4349,9 @@ void showStructsCSA(ticsa *myicsa) {
 		#ifdef PSI_R3HYBRID
 			printf("\tPsi[%d] = %d\n", index, getPsiR3HybridValue(&(myicsa->hcPsi),index));
 		#endif
+		#ifdef PSI_R3CLS_GAPS
+			printf("\tPsi[%d] = %d\n", index, myicsa->psi_obj->getPsiValue(index));
+		#endif				
 		#ifdef PSI_PLAIN
 			printf("\tPsi[%d] = %d\n", index, getPlainPsiValue(&(myicsa->plPsi),index));
 		#endif		
@@ -3382,6 +4433,9 @@ int SadCSACompare(ticsa *myicsa, uint *pattern, uint patternSize, uint p) {
 			#ifdef PSI_R3HYBRID
 				i=getPsiR3HybridValue(&(myicsa->hcPsi),i);
 			#endif
+			#ifdef PSI_R3CLS_GAPS
+				i=myicsa->psi_obj->getPsiValue(i);
+			#endif				
 			#ifdef PSI_PLAIN
 				i=getPlainPsiValue(&(myicsa->plPsi),i);
 			#endif					
@@ -3427,6 +4481,10 @@ int SadCSACompareSecondOn(ticsa *myicsa, uint *pattern, uint patternSize, uint p
 			#ifdef PSI_R3HYBRID
 				i=getPsiR3HybridValue(&(myicsa->hcPsi),i);
 			#endif
+			#ifdef PSI_R3CLS_GAPS
+				i=myicsa->psi_obj->getPsiValue(i);
+				;
+			#endif				
 			#ifdef PSI_PLAIN
 				i=getPlainPsiValue(&(myicsa->plPsi),i);
 			#endif					
@@ -3448,6 +4506,8 @@ uint parametersCSA(ticsa *myicsa, char *build_options){
 	nsHuff = DEFAULT_nsHUFF;
 	psiSearchFactor = DEFAULT_PSI_BINARY_SEARCH_FACTOR;
 	
+	myicsa->psitypes[0]    = myicsa->psitypes[1]   =myicsa->psitypes[2]    =0; // {0,0,0};     //default psi compressed with 3RANGES + HUFFMANRLE
+	
 	if (build_options != NULL) {
 	parse_parameters(build_options,&num_parameters, &parameters, delimiters);
 	for (j=0; j<num_parameters;j++) {
@@ -3456,12 +4516,22 @@ uint parametersCSA(ticsa *myicsa, char *build_options){
 			ssPsi=atoi(parameters[j+1]);			
 		} 	
 		if ((strcmp(parameters[j], "nsHuff") == 0 ) && (j < num_parameters-1) ) {
-			nsHuff=atoi(parameters[j+1]);
-			nsHuff *=1024;			
+			//nsHuff=atoi(parameters[j+1]);
+			//nsHuff *=1024;			
+			double nsHuff2=atof(parameters[j+1]);
+			nsHuff =nsHuff2*1024;			
 		} 
 		if ((strcmp(parameters[j], "psiSF") == 0 ) && (j < num_parameters-1) ) {
 			psiSearchFactor=atoi(parameters[j+1]);
 		} 			
+
+		if ((strcmp(parameters[j], "psitypeR1R2R3") == 0 ) && (j < num_parameters-1) ) {
+			int val=atoi(parameters[j+1]);
+			myicsa->psitypes[2]=val%10; val/=10;
+			myicsa->psitypes[1]=val%10; val/=10;
+			myicsa->psitypes[0]=val%10;
+		} 
+
 		j++;
 	}
 	free_parameters(num_parameters, &parameters);
@@ -3473,5 +4543,408 @@ uint parametersCSA(ticsa *myicsa, char *build_options){
 
 	printf("\n\t parameters for iCSA: samplePsi=%d", ssPsi);
 	printf("\n\t              : nsHuff=%d, psiSearchFactor = %d --> jump = %d", nsHuff,psiSearchFactor, myicsa->psiSearchFactorJump);
+	printf("\n\t              : psitypesR1R2R3 ={%u,%u,%u}", myicsa->psitypes[0], myicsa->psitypes[1], myicsa->psitypes[2]);
 	return 0;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//int getFindPsiicsa(void *index, size_t ini, size_t end, ulong fst, ulong sec, ulong *i1, ulong *i2) {
+//	ticsa *myicsa = (ticsa *) index;
+//		#ifdef PSI_HUFFMANRLE
+//			return	getfindHuffmanPsiValue(&(myicsa->hcPsi),ini,end,  fst,sec, i1,i2);
+//		#endif			 
+//		#ifdef PSI_GONZALO
+//			return	getfindGonzaloPsiValue(&(myicsa->gcPsi),ini,end,  fst,sec, i1,i2);
+//		#endif
+//		#ifdef PSI_DELTACODES
+//			return	getfindDeltaPsiValue(&(myicsa->dcPsi),ini,end,  fst,sec, i1,i2);
+//		#endif	
+//		#ifdef PSI_VBYTERLE
+//			return getfindVbytePsiValue(&(myicsa->vbPsi),ini,end,  fst,sec, i1,i2);
+//		#endif			
+//		#ifdef PSI_R3H
+//			return	getfindPsiR3HValue(&(myicsa->hcPsi),ini,end,  fst,sec, i1,i2);
+//		#endif
+//		#ifdef PSI_R3HYBRID
+//			return	getfindPsiR3HybridValue(&(myicsa->hcPsi),ini,end,  fst,sec, i1,i2);
+//		#endif
+//		#ifdef PSI_PLAIN
+//			return	getfindPlainPsiValue(&(myicsa->plPsi),ini,end,  fst,sec, i1,i2);
+//		#endif
+//}
+
+
+
+
+
+ulong getFindPsiicsaLeftOnly(void *index, size_t ini, size_t end, ulong fst, ulong sec, ulong *i1) {
+	ticsa *myicsa = (ticsa *) index;
+	
+	ulong i2; 
+	
+	ulong returnedval;  //the 
+		#ifdef PSI_HUFFMANRLE
+			returnedval=	getfindHuffmanPsiValue(&(myicsa->hcPsi),ini,end,  fst,sec, i1,&i2);
+		#endif			 
+		#ifdef PSI_GONZALO
+			returnedval=getfindGonzaloPsiValue(&(myicsa->gcPsi),ini,end,  fst,sec, i1,&i2);
+		#endif
+		#ifdef PSI_DELTACODES
+			returnedval=getfindDeltaPsiValue(&(myicsa->dcPsi),ini,end,  fst,sec, i1,&i2);
+		#endif	
+		#ifdef PSI_VBYTERLE
+			returnedval=getfindVbytePsiValue(&(myicsa->vbPsi),ini,end,  fst,sec, i1,&i2);
+		#endif			
+		#ifdef PSI_R3H
+			//return	getfindPsiR3HValue(&(myicsa->hcPsi),ini,end,  fst,sec, i1,&i2);			
+			return  getfindPsiLeftOnlyR3HValue(&(myicsa->hcPsi),ini,end,  fst,sec, i1);
+		#endif
+		#ifdef PSI_R3HYBRID
+			return getfindPsiLeftOnlyR3HybridValue(&(myicsa->hcPsi),ini,end,  fst,sec, i1);
+			//returnedval=getfindPsiR3HybridValue(&(myicsa->hcPsi),ini,end,  fst,sec, i1,&i2);
+		#endif
+		#ifdef PSI_R3CLS_GAPS
+			return myicsa->psi_obj->getfindLeftOnlyPsiValue(ini,end,fst,sec,i1);
+		#endif				
+		#ifdef PSI_PLAIN
+			//returnedval=getfindPlainPsiValue(&(myicsa->plPsi),ini,end,  fst,sec, i1,&i2);
+			return getfindLeftOnlyPlainPsiValue(&(myicsa->plPsi),ini,end,  fst,sec, i1);
+		#endif	
+	
+	
+	if (returnedval ==0) return 0;	
+	//else
+	returnedval = getPsiicsa(myicsa,ini+ (*i1)) +1;  //* sin comprobar, si estoy reutilizando getFind... (que busca left y right) --> devolver el valor de psi at "left" !
+													 //debe devolver +1, para asegurarnos de que nunca devuelve zero (salvo que returnedval ==0 arriba.
+	return returnedval;
+}
+
+
+
+
+
+
+// right non se modifica
+
+//#define WITHEXPSEARCH3   //if defined: uses exp-search instead of only binary-search on samples
+//#define VERBOSEEXPSEARCH3
+
+/* MODIFied  SO THAT it returns 
+ *     numocc=0 if no left was found, 
+ * otherwise returns the value of numocc = +1 + psi(*left)
+ *                                         +1 is added to ensure a zero is not returned.
+ * */
+int expSearchPsiTarget_leftOnly_samplesFirst(void *index, ulong *left, ulong *right, ulong *numocc, ulong tl, ulong tr){	
+
+
+	ticsa *myicsa = (ticsa *) index;
+	register uint tpsi = myicsa->T_Psi;
+	
+
+	register unsigned long l, r, sl, sr, p;
+	l=*left; r=*right;
+		
+	sl=l/tpsi * tpsi; 
+	sr=r/tpsi * tpsi;
+	
+	
+	
+	//no sample in [l,r] --------------------	
+	if ( (sl<l) && (sr<l)) {
+
+		
+		ulong i1,i2;		
+		//int ipos= getFindPsiicsa(myicsa,l,r,tl,tr,&i1,&i2);
+		ulong ipos = getFindPsiicsaLeftOnly(myicsa,l,r,tl,tr,&i1);
+		
+		if (ipos==0) {
+			*numocc =0; return 1000;
+		}
+		//if (ipos>=1) {
+		else {
+			*left= l+i1; *numocc = ipos  ; return 1001;		//ipos has already added 1 to psi(*left)
+		}
+		
+	}
+	
+	//only 1 sample in [l,r] --------------------
+	else if ( ((sl<l) && (sr == (sl+tpsi)))  || ((sl ==l) && (sr==sl)) ) {
+
+		if (sl==sr){   //l == sl == sr.
+			p= getPsiicsa(myicsa, sl);    //sampled pos.
+			int cmp = cmptarget(p,tl,tr);
+			if ( cmp ==0 ) {
+				*left= l;  *numocc = 1+p; return 1011;	  //adds 1 to psi(*left)	
+			}
+			else if ( cmp>0 ) {
+				*numocc =0; return 1012;			
+			}
+			else { // (cmp <0)
+
+				ulong i1,i2;		
+				//int ipos= getFindPsiicsa(myicsa,l,r,tl,tr,&i1,&i2);
+				ulong ipos = getFindPsiicsaLeftOnly(myicsa,l,r,tl,tr,&i1);
+				if (ipos==0) {
+					*numocc =0; return 1013;
+				}
+				//if (ipos>=1) {
+				else {
+					*left= l+i1; *numocc = ipos; return 1014;	//ipos has already added 1 to psi(*left)
+				}							
+			}
+		}
+		
+		else {  //sl <l   && sr=sl+tpsi
+			
+			// con sr
+			p= getPsiicsa(myicsa, sr);    //sampled pos.
+		
+			//if (p<tl) { *numocc = 0; return 1015;}       //estaba mal, fari venres 3.
+			if (p<tl) {l=sr;}  //acoto l para getFind()  // podría hacer l=sr+1, pero si r==sr entonces fallaría. Me quedo en sr
+			
+			if (p > tr) r=sr-1;      //acoto r para getFind()
+			else if (p == tr) r= sr;			
+
+			ulong i1,i2;		
+			//int ipos= getFindPsiicsa(myicsa,l,r,tl,tr,&i1,&i2);
+			ulong ipos = getFindPsiicsaLeftOnly(myicsa,l,r,tl,tr,&i1);
+			if (ipos==0) {
+				*numocc =0; return 1017;
+			}
+			//if (ipos>=1) {
+			else {
+				*left= l+i1; *numocc = ipos; return 1018;	//ipos has already added 1 to psi(*left)
+			}
+					
+		}
+		/** ATA AQUI DEBERÍA ESTAR BEN CON ADRIAN !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  */
+	}
+
+		
+	// 2+ samples in [l,r] --------------------
+	//else 2+ samples en [l,r]
+	else {
+		
+		if ((l == sl) &&(sl+tpsi == sr)) {
+			//find(l,nextsl , tl,tr)
+			ulong i1,i2;		
+			//int ipos= getFindPsiicsa(myicsa, l, r,  tl,tr,&i1,&i2);
+			ulong ipos = getFindPsiicsaLeftOnly(myicsa,l,r,tl,tr,&i1);
+			if (ipos==0) {
+				*numocc =0; return 1020;
+			}
+			//if (ipos>=1) {
+			else {
+				*left= l+i1; *numocc = ipos; return 1021;	//ipos has already added 1 to psi(*left)
+			}
+		}
+			
+		
+	//	p= getPsiicsa(myicsa, sl);
+	//	if (p>tr){*numocc = 0; return 1021;}    //non comprobábamos que sl == l !
+		
+		
+		//*left between l and nextsl ??
+		unsigned long nextsl;
+		nextsl= sl+tpsi;
+			
+		p= getPsiicsa(myicsa, nextsl);
+		if (p==tl) {*left= nextsl; *numocc = 1+p; return 1022;	}  //adds 1 to psi(*left)
+		
+		if (p>tl) {
+			
+			//find(l,nextsl , tl,tr)
+			ulong i1,i2;		
+			//int ipos= getFindPsiicsa(myicsa, l, nextsl,  tl,tr,&i1,&i2);
+			ulong ipos = getFindPsiicsaLeftOnly(myicsa, l, nextsl,  tl,tr,&i1);
+			if (ipos==0) {
+				*numocc =0; return 1023;
+			}
+			//if (ipos>=1) {
+			else {
+				*left= l+i1; *numocc = ipos; return 1024;	//ipos has already added 1 to psi(*left)
+			}
+
+		}
+
+		//------------/
+		//else *left must be within (nextsl , r] from now on
+
+		//maybe between [sr, r]??
+		p= getPsiicsa(myicsa, sr);  //sr must be <=r
+		if (p==tl) {*left= sr; *numocc = 1+p; return 1030;	}  //adds 1 to psi(*left)
+		if (p<tl)  {
+			// find (sr,r , tl, tr)
+			ulong i1,i2;		
+			//int ipos= getFindPsiicsa(myicsa,sr,r,tl,tr,&i1,&i2);
+			ulong ipos = getFindPsiicsaLeftOnly(myicsa,sr,r,tl,tr,&i1);
+			if (ipos==0) {
+				*numocc =0; return 1031;
+			}
+			//if (ipos>=1) {
+			else {
+				*left= sr+i1; *numocc = ipos; return 1032;	//ipos has already added 1 to psi(*left)
+			}
+		}
+
+		
+		//exp-bin search within (nextsl , sr) from now on 
+		
+
+
+	// IF YOU REACHED HERE, 
+		// LEFT is unknown (but within (nextsl,sr)) and nextsl < sr
+
+		{
+			
+			ulong ll,rr;
+			l=sl = nextsl;
+			r= sr;
+
+
+			ll= sl; //rr = r/tpsi * tpsi;
+			rr=r;
+			
+					///////////////////////////////////////////////////
+					#ifdef WITHEXPSEARCH3
+					//SHOULD USE EXPONENTIAL SEARCH HERE. 
+						#ifdef VERBOSEEXPSEARCH3
+								printf("\n [%lu ]before exp-search (2): ll,rr = [%lu,%lu] --> ",veces, ll,rr);
+						#endif			
+								////////////////////
+								//exponential search step : we are looking for left point.
+								// moves ll forward, and shortens rr if possible.
+								////////////////////
+								if (ll< rr-tpsi) // non consecutive samples ==> exp search 
+								{	unsigned long psi_p;
+									unsigned long step =1*tpsi;
+									unsigned long prevll=ll;
+									
+									while (ll<rr) {
+										p=ll;
+										psi_p= getPsiicsa(myicsa, p);
+										int comparison = cmptarget(psi_p,tl,tr);
+										if (comparison <0) {
+											prevll=ll; ll+=step; step *=2;
+										}
+										else {	
+											if (comparison >0) rr=ll;			
+											break;
+										}				
+									}
+									ll=prevll;
+								}	
+								////////////////////
+								// now the usual binary search between ll and rr.
+								////////////////////
+
+						#ifdef VERBOSEEXPSEARCH3
+								printf("after = [%lu,%lu]..",ll,rr);
+						#endif			
+					#endif						
+					///////////////////////////////////////////////////
+			
+			
+			int comp =0;			
+			while (ll < rr) {
+				p = ((ll+rr)/2 /tpsi * tpsi);
+				comp = cmptarget(getPsiicsa(myicsa, p),tl,tr);
+				if (comp >=0) 
+					rr=p -tpsi;
+				else //(comp <0)
+					ll=p+tpsi;		
+			}
+			
+			ulong froml=ll;
+
+			if (cmptarget(getPsiicsa(myicsa, ll),tl,tr)>=0) {
+				if (ll >sl)
+					froml=ll-tpsi;  //find within (ll-tpsi, p]				
+			}
+
+					#ifdef WITHEXPSEARCH3
+						#ifdef VERBOSEEXPSEARCH3
+								printf("  ==>  after binsearch = [%lu,%lu].. , froml=[%lu]",ll,rr,froml);
+						#endif
+					#endif
+				
+			ulong i1,i2;		
+			//int ipos= getFindPsiicsa(myicsa,froml,froml+tpsi, tl,tr,&i1,&i2);
+			ulong ipos = getFindPsiicsaLeftOnly(myicsa,froml,froml+tpsi, tl,tr,&i1);
+			if (ipos==0) {
+				 *numocc =0; return 1041;
+			}
+			//if (ipos>=1) {
+			else {
+				*left= froml+i1; *numocc=ipos; return 1042;	//ipos has already added 1 to psi(*left)
+			}
+		}
+			
+	}//end 2+samples
+		
+	return 0;
+}
+
+
+
+
+
+

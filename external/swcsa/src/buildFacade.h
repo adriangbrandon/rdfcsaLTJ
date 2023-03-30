@@ -111,6 +111,10 @@ using namespace cds_static;
 		#define OBJECT (2)
 #endif
 
+#ifndef NO_TYPE_SET_OPS
+		#define NO_TYPE_SET_OPS (99)
+#endif
+
 
 #ifndef BUILD_FACADE_TYPES
 #define BUILD_FACADE_TYPES
@@ -144,7 +148,8 @@ using namespace cds_static;
 		
 		uint is_in_spo_order;     //1 for RDFCSA IN SPO ORDER  -default
 		                          //O for RDFCSA IN OPS ORDER  -BEWARE !! set externally after build and load. NOT SAVED TO DISK !!
-		                          //                                      i.e. within build_index_dual() and load_index_dual(); 
+		                          //                                      i.e. within build_index_dual() and load_index_dual(); 	                          
+		                          
 	} twcsa;
 
 
@@ -159,6 +164,10 @@ using namespace cds_static;
 typedef struct {
 	twcsa *spo;
 	twcsa *ops;
+	//ulong RANGEVALID[3][2];  
+	ulong **RANGEVALID;  
+							 //valid ranges for input SUBJECTS [1,ns], PREDICATES [1,np], AND OBJECTS [1+gapobjects, gapopbjects +no]
+	                         //initilized in dual_build() and dual_load()
 } tdualrdfcsa;
 
 
@@ -388,6 +397,8 @@ int dual_getRangeLR_for_type_and_GEQvalue(twcsa *g, uint type, uint value, ulong
 // eg o in [gapobjects,gapobjects+noi-1] 
 //                 (noi=number of objects    in source dataset => noi = no -1;
 int dual_isValidValue_for_Type_in_Input(twcsa *g, int type, uint value);
+inline int dual_isValidValue_for_Type_in_Input_Matrix(ulong** V, int type, uint value);
+int dual_initRangeValid_for_Type_in_Input(tdualrdfcsa *dual);
 
 
 

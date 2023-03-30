@@ -129,8 +129,7 @@ VbyteCompressedPsi vbyteCompressPsi(unsigned int *Psi, size_t psiSize, unsigned 
 				bcsize += tmpsize;
 				runLenght = 0;
 			}
-		}
-		
+		}		
 	}
 		
 	if(runLenght) {

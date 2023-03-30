@@ -358,10 +358,16 @@ int  so_2 (void *gindex, int S, int O, uint **buffer) {
 		uint *res_o = res+1+ (MAX_RESULTS)*2;
 
 		l=lo;r=ro;
-		//binSearchPsiTarget(g->myicsa, &l,&r, &numocc, ls, rs);		
+				
+//		binSearchPsiTarget(g->myicsa, &l,&r, &numocc, ls, rs);		
+		
 		binSearchPsiTarget_samplesFirst(g->myicsa, &l,&r, &numocc, ls, rs);
+//		expSearchPsiTarget_samplesFirst(g->myicsa, &l,&r, &numocc, ls, rs);
+
+//		expSearchPsiTarget(g->myicsa, &l,&r, &numocc, ls, rs);		
 
 		if (!numocc) return res[0];
+	
 	//	printf("\n BSearchS-P= ls,rs = [%lu, %lu]",l,r);
 
 		#ifdef BUFFER_PSI_ON
@@ -769,6 +775,10 @@ int dual_rdfcsaOPS_os (void *gindex, int O, int S, unsigned int **buffer) {
 	#endif
 	
 	res[0]=0;
+
+
+
+
 	
 	if (numocc_s && numocc_o) {	
 		uint *res_s = res+1;
@@ -777,6 +787,44 @@ int dual_rdfcsaOPS_os (void *gindex, int O, int S, unsigned int **buffer) {
 
 		l=ls;r=rs;
 		binSearchPsiTarget_samplesFirst(g->myicsa, &l,&r, &numocc, lo, ro);
+		
+		
+		
+//		/////////// TEST expSearchPsiTarget_leftOnly_samplesFirst /////////////////////
+//		static int veces =0;
+//		{ ulong lll=ls, rrr=rs;
+//		  ulong numocc2;
+//			int xx= expSearchPsiTarget_leftOnly_samplesFirst(g->myicsa, &lll,&rrr, &numocc2, lo, ro);
+//		
+//					
+//			if (numocc2>0) {
+//
+//				if (numocc2 > numocc ){
+//					printf("\n expSearch_leftOnly fails: numocc= %lu, numocc2=%lu  (retval=%d)\n", numocc,numocc2,xx); veces ++;;
+//				}
+//				else {
+//					if (lll == l)
+//						{ //printf("\r expSearch_leftOnly OK: (occs = %lu) (retval=%d)",numocc,xx);
+//						}
+//					else {
+//						printf("\n expSearch_leftOnly fails: l= %lu, lll=%lu (retval=%d)\n", l, lll,xx); veces ++;;
+//					}
+//				}
+//
+//			}
+//			else {				
+//				if(numocc>0) {
+//					printf("\n expSearch_leftOnly fails: numocc= %lu, numocc2=%lu  (retval=%d)\n", numocc,numocc2,xx); veces ++;;
+//				}
+//				//else numocc=numocc2=0
+//			}
+//
+//
+//			
+//			if (veces > 5) exit(0);
+//		}
+//		////////////////////////////////
+
 
 		if (!numocc) return res[0];
 	//	printf("\n BSearchS-P= ls,rs = [%lu, %lu]",l,r);

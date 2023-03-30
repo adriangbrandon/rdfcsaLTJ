@@ -142,6 +142,10 @@ namespace rdfcsa {
             }
         }
 
+        ~ltj_iterator(){
+            m_iterator = destroyIterator_dual(m_iterator);
+        }
+
         //! Copy constructor
         ltj_iterator(const ltj_iterator &o) {
             copy(o);
@@ -165,7 +169,7 @@ namespace rdfcsa {
             if (this != &o) {
                 m_ptr_triple_pattern = std::move(o.m_ptr_triple_pattern);
                 m_is_empty = o.m_is_empty;
-                m_iterator = o.m_iterator;
+                m_iterator = cloneIterador_dual(o.m_iterator);
             }
             return *this;
         }
@@ -187,12 +191,13 @@ namespace rdfcsa {
             }
         };
 
-
         void up(var_type var) { //Go up in the trie
             up_dual(m_iterator);
         };
 
-        value_type leap(var_type var, size_type c = 1) {
+
+
+        value_type leap(var_type var, size_type c=1) {
             if (is_variable_subject(var)) {
                 return leap_dual(m_iterator, SUBJECT, c);
             } else if (is_variable_predicate(var)) {
@@ -218,6 +223,22 @@ namespace rdfcsa {
                 return get_all_dual(m_iterator, OBJECT);
             }
         }
+
+        value_type seek_last(var_type var){
+            if(is_variable_predicate(var)){
+                get_one_dual_init(m_iterator, PREDICATE);
+            }else if (is_variable_subject(var)){
+                get_one_dual_init(m_iterator, SUBJECT);
+            }else{
+                get_one_dual_init(m_iterator, OBJECT);
+            }
+            return get_one_dual_next(m_iterator);
+        }
+
+        value_type seek_last_next(var_type var){
+            return get_one_dual_next(m_iterator);
+        }
+
 
         size_type interval_size() const{
             return get_range_length_dual(m_iterator);

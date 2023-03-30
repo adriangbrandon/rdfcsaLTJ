@@ -327,6 +327,7 @@ fprintf(stderr,"\n espacio para stream-psi = %lu", sizeof(int)*((streamSize+W-1)
 	
 	// Necesario antes de decodificar
 	prepareToDecode(&diffsHT);
+
 	
 	// Asignamos os valores a cPsi e devolvemolo
 	cPsi.T = T;
@@ -1306,6 +1307,7 @@ HuffmanCompressedPsi loadHuffmanCompressedPsi(char *filename) {
 	read_err=fread( H.num, sizeof(int), (H.depth+1),file);
 	read_err=fread( H.fst, sizeof(int), (H.depth+1),file);	
 	compressedPsi.diffsHT = H;
+	
 	// Fin da carga do arbol de Huffman
 	read_err=fread( &(compressedPsi.nS), sizeof(int), 1,file);
 	read_err=fread( &(compressedPsi.numberOfSamples), sizeof(size_t), 1, file);

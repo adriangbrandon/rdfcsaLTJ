@@ -1210,3 +1210,321 @@ start = getTime2();
 
 
 
+int dual_test_sp_ps_TARGET_BIN_VS_FIRSTLEFT(void *index, uint **res, uint **res2) {
+	printf("\n call to dual_test_sp_ps_TARGET_BIN_VS_FIRSTLEFT\n");
+
+
+double start ,end;
+
+	tdualrdfcsa *dualrdf = (tdualrdfcsa *) index;
+	twcsa *g = dualrdf->spo;
+	twcsa *g2 = dualrdf->ops;
+	
+
+	uint *buffer;
+	size_t size_buffer;
+	printf("\n dumping source data \n");fflush(stdout);
+		dumpSourceData(g, &buffer, &size_buffer);
+	printf("... %zu triplets recovered (%zu expected)\n",size_buffer / 3, g->n);fflush(stdout);
+
+	/*
+				{
+					size_t i,j,z=0;
+					z=0;
+					z+=g->nEntries;
+					for (i=1; i<g->n; i++){
+						printf("\n <");
+						for (j=0;j<g->nEntries;j++) {
+							fprintf(stdout,"%u ",buffer[z]);							
+							z++;
+						}		
+						printf(">");										
+					}					
+				}
+	*/
+	
+	uint *B = buffer;
+	uint *f = (uint *) malloc (sizeof(uint) * size_buffer);
+	
+	ulong z=0, i=0, n=size_buffer, j;
+
+	printf("\n now computing different triplets sp* and its number of occs \n");fflush(stdout);
+	while (i<n) {
+		j=i+3;
+		while ((j<n) && (B[i]==B[j]) && (B[i+1]==B[j+1]) ) {
+			j+=3;
+			
+			if (!(j%1000000)   ) printf("\n\t<s,p,o>= %u, %u, %u", B[j],B[i+1],B[i+2]);
+			
+		}
+		f[z/3]=(j-i)/3;
+		B[z] = B[i];
+		B[z+1] = B[i+1];
+		B[z+2] = B[i+2];
+		z+=3;
+		
+		i=j;
+	}
+
+	n= z/3;
+	printf("\n n=%lu, z=%lu, i=%lu, j= %lu\n", n,z,i,j);fflush(stdout);
+	
+	// now  B[0.. 3n-1] has the "n" different triplets.
+	//freq[0..n-1] has the "n" frequencies of such triplets.
+	printf("\n source triplets = %zu, different triplets <s,p,\?> = %lu\n",size_buffer/3,n);
+
+ 	/***************/	
+uint *V = NULL;
+ 	{
+ 	srand(time(NULL));
+ start = getTime2();	
+ 
+ 
+	fflush(stdout);fflush(stderr);
+	//now perform sp queries.
+	printf("\n now performing <s,p,\?> queries over the existing triplets:\n");
+	int results, results1 ;	
+
+	i=0;
+	printf("\n\t <%u,%u,*> skipped\n", B[i*3],B[i*3+1]); fflush(stdout);fflush(stderr);
+	//skips i=0;
+	
+	V = (uint *) malloc (n * 4 * sizeof(uint));
+		printf("\n now preparing ranges (using select) that will be searched for with bin/exp: \n");
+		for (i=1; i< n ; i++) {
+			
+			uint S=B[i*3];
+			uint P=B[i*3+1];
+
+			uint ss = mapID(g,S,SUBJECT);
+			uint pp = mapID(g,P,PREDICATE);
+		
+			ulong l,r, numocc;
+			ulong ls,rs, numocc_s;
+			ulong lp,rp, numocc_p;	
+			
+			geticsa_select_j_y_j_mas_1 (g->myicsa, ss+1, &ls, &rs);	rs--;		
+			numocc_s = rs-ls+1;
+			
+		
+			lp= getSelectTablePredicates(g->myicsa,pp+1);
+			rp= getSelectTablePredicates(g->myicsa,pp+2)-1;
+			numocc_p = rp-lp+1;
+			
+			V[i*4+0]=ls;  V[i*4+1]=rs;
+			V[i*4+2]=lp;  V[i*4+3]=rp;
+		}	
+	}
+	
+	{
+ start = getTime2();	
+	
+		printf("\n now performing BOTH binSearchPsiTarget_samplesFirst() and \n\t expSearchPsiTarget_leftOnly_samplesFirst() over existing triplets:\n");
+		for (i=1; i< n ; i++) {
+
+			ulong l,r, numocc;
+			ulong ls,rs, numocc_s;
+			ulong lp,rp, numocc_p;	
+					
+			ls = V[i*4+0]; rs = V[i*4+1];
+			lp = V[i*4+2]; rp = V[i*4+3];
+			
+	//		/////////// TEST binSearchPsiTarget_samplesFirst /////////////////////
+			l=ls;r=rs;
+			binSearchPsiTarget_samplesFirst(g->myicsa, &l,&r, &numocc, lp, rp);   //we only need l actually
+					
+	//		/////////// TEST expSearchPsiTarget_leftOnly_samplesFirst /////////////////////
+			 ulong lll=ls, rrr=rs;
+			  ulong numocc2;
+				int xx= expSearchPsiTarget_leftOnly_samplesFirst(g->myicsa, &lll,&rrr, &numocc2, lp, rp);
+	//		///////////////////
+			
+				if (numocc2>0) {
+					if (numocc == 0 ) {
+					//if (numocc2 > numocc ){   //now numocc2 is a position (a value of psi, so it could be larger than numocc)
+						printf("\n expSearch_leftOnly fails: numocc= %lu, numocc2=%lu  (retval=%d)\n", numocc,numocc2,xx);
+					}
+					else {
+						if (lll == l)
+							{ //printf("\r expSearch_leftOnly OK: (occs = %lu) (retval=%d)",numocc,xx);
+							}
+						else {
+							printf("\n expSearch_leftOnly fails: l= %lu, lll=%lu (retval=%d)\n", l, lll,xx); 
+						}
+					}
+				}
+				else {				
+					if(numocc>0) {
+						printf("\n expSearch_leftOnly fails: numocc= %lu, numocc2=%lu  (retval=%d)\n", numocc,numocc2,xx);
+					}
+					//else numocc=numocc2=0
+				}
+			////////////////
+						
+			if((i%(n/1000)==0)) fprintf(stderr, "\rProcessing %.1f%% (%.1f secs)", (float)i/n*100, getTime2()-start);;
+		}	
+		
+		fprintf(stderr, "\rProcessing %.1f%% (%.1f secs)", (float)i/n*100, getTime2()-start); fflush(stderr);
+		printf("\n TEST <sp -bin-exp-search\?> passed **ok** \n");
+	 
+	 end = getTime2();	
+		printf("\n total time: %.3f secs\n\n", end-start );
+	}
+
+
+ 	{
+start = getTime2();	
+		printf("\n\n\n now performing binSearchPsiTarget_samplesFirst() ONLY over existing triplets:\n");
+		for (i=1; i< n ; i++) {
+
+			ulong l,r, numocc;
+			ulong ls,rs, numocc_s;
+			ulong lp,rp, numocc_p;	
+					
+			ls = V[i*4+0]; rs = V[i*4+1];
+			lp = V[i*4+2]; rp = V[i*4+3];
+			
+	//		/////////// TEST binSearchPsiTarget_samplesFirst /////////////////////
+			l=ls;r=rs;
+			binSearchPsiTarget_samplesFirst(g->myicsa, &l,&r, &numocc, lp, rp);   //we only need l actually
+					
+	//		/////////// TEST expSearchPsiTarget_leftOnly_samplesFirst /////////////////////
+	//		 ulong lll=ls, rrr=rs;
+	//		  ulong numocc2;
+	//			int xx= expSearchPsiTarget_leftOnly_samplesFirst(g->myicsa, &lll,&rrr, &numocc2, lp, rp);
+	//		///////////////////
+			
+						
+			if((i%(n/1000)==0)) fprintf(stderr, "\rProcessing %.1f%% (%.1f secs)", (float)i/n*100, getTime2()-start);;
+		}	
+		
+		fprintf(stderr, "\rProcessing %.1f%% (%.1f secs)", (float)i/n*100, getTime2()-start); fflush(stderr);
+	 
+	 end = getTime2();	
+		printf("\n total time (binSearchPsiTarget_samplesFirst()): %.3f secs\n\n", end-start );
+	}
+
+
+	{
+ start = getTime2();	
+	
+		printf("\n\n\n now performing expSearchPsiTarget_leftOnly_samplesFirst() ONLY over existing triplets:\n");
+		for (i=1; i< n ; i++) {
+
+			ulong l,r, numocc;
+			ulong ls,rs, numocc_s;
+			ulong lp,rp, numocc_p;	
+					
+			ls = V[i*4+0]; rs = V[i*4+1];
+			lp = V[i*4+2]; rp = V[i*4+3];
+			
+	//		/////////// TEST binSearchPsiTarget_samplesFirst /////////////////////
+	//		l=ls;r=rs;
+	//		binSearchPsiTarget_samplesFirst(g->myicsa, &l,&r, &numocc, lp, rp);   //we only need l actually
+					
+	//		/////////// TEST expSearchPsiTarget_leftOnly_samplesFirst /////////////////////
+			 ulong lll=ls, rrr=rs;
+			  ulong numocc2;
+				int xx= expSearchPsiTarget_leftOnly_samplesFirst(g->myicsa, &lll,&rrr, &numocc2, lp, rp);
+	//		///////////////////
+			
+						
+			if((i%(n/1000)==0)) fprintf(stderr, "\rProcessing %.1f%% (%.1f secs)", (float)i/n*100, getTime2()-start);;
+		}	
+		
+		fprintf(stderr, "\rProcessing %.1f%% (%.1f secs)", (float)i/n*100, getTime2()-start); fflush(stderr);
+	 
+	 end = getTime2();	
+		printf("\n total time (expSearchPsiTarget_leftOnly_samplesFirst()): %.3f secs\n\n", end-start );
+	}
+printf("\n done!!\n");
+
+if (V) free(V);
+
+ 	/***************/		
+ 
+
+//		/***************/
+//		{
+//		srand(time(NULL));
+//	start = getTime2();	
+//	
+//		fflush(stdout);fflush(stderr);
+//		//now perform spo queries.
+//		printf("\n now performing <s,p,\?> queries over rather unexisting triplets:\n");
+//		int results, results1 ;	
+//		long total_results=0;
+//		
+//			//skips i=0;
+//		for (i=1; i< n ; i++) {
+//			B[i*3]   += ((B[i*3]  > (g->gaps[0]+1)) ?  (rand01()*(-1)) : rand01() );
+//			B[i*3+1] += ((B[i*3+1]> (g->gaps[1]+1)) ?  (rand01()*(-1)) : rand01() );
+//			B[i*3+2] += ((B[i*3+2]> (g->gaps[2]+1)) ?  (rand01()*(-1)) : rand01() );
+//			if (B[i*3+2] >= g->gaps[3]) B[i*3+2] = B[i*3+2] >= g->gaps[3] -1;
+//	
+//			//results2 = sp_0(gindex, B[i*3],B[i*3+1], res2);
+//			//results = sp(gindex, B[i*3],B[i*3+1], res);
+//			
+//	 		results  = dual_rdfcsaSPO_sp(g , B[i*3],B[i*3+1], res);   
+//	 		results1 = dual_rdfcsaOPS_ps(g2, B[i*3+1],B[i*3], res2);
+//	 		
+//	 		//SORT RESULTS1 in so order here not needed, both objects and subjects are sorted within those ranges!!
+//	 	
+//			if (results != results1) { 
+//				printf("\n sp operation failed (i=%lu) - results = %u, results1 = %u\n", i, results, results1);
+//				printf("\n<s,p,\?>= <%u, %u, %u>", B[i*3],B[i*3+1],B[i*3+2]);
+//				exit(0);
+//			}
+//			if (results > 0) {
+//				uint *res_s = (*res)+1;
+//				uint *res_p = (*res)+1+ (MAX_RESULTS)*1;
+//				uint *res_o = (*res)+1+ (MAX_RESULTS)*2;		
+//	
+//				uint *res2_s = (*res2)+1;
+//				uint *res2_p = (*res2)+1+ (MAX_RESULTS)*1;
+//				uint *res2_o = (*res2)+1+ (MAX_RESULTS)*2;		
+//	
+//				//checks results are "expected"
+//				int x;
+//				for (x=0; x<results;x++)
+//				if ( (res_s[x] != B[i*3])    ||  (res_p[x] != B[i*3+1])  ||
+//					 (res_s[x] != res2_s[x]) ||  (res_p[x] != res2_p[x]) ||(res_o[x] != res2_o[x])
+//				   ) {
+//					printf("\n\n Retrieved triplet failed: <s,p,\?> = <%u,%u,\?> and should be  <%u,%u,\?>\n", 
+//					res_s[x], res_p[x],  B[i*3],B[i*3+1] );fflush (stdout);
+//	
+//					printf("\n\t actually retrieved triplet failed: <s,p,o> = <%u,%u,%u> and should be  <%u,%u,%u> \n", 
+//					res_s[x], res_p[x],  res_o[x],res2_s[x], res2_p[x],  res2_o[x]  );fflush (stdout);
+//	
+//					exit(0);
+//				}				
+//			}	
+//			total_results +=results;
+//			
+//			if((i%(n/1000)==0)) fprintf(stderr, "\rProcessing %.1f%% (%.1f secs)", (float)i/n*100, getTime2()-start);;
+//	 	}	
+//	 	
+//	 	fprintf(stderr, "\rProcessing %.1f%% (%.1f secs)", (float)i/n*100, getTime2()-start); fflush(stderr);
+//		printf("\n TEST <sp\?> passed **ok** (total results = %lu) \n", total_results);
+//	 
+//	 end = getTime2();	
+//	 	printf("\n time: %.3f secs\n\n", end-start );
+//	 	}
+//	 	/***************/	
+
+	
+	return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+

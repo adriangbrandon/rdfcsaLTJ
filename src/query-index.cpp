@@ -27,13 +27,14 @@
 #include <fstream>
 #include <sstream>
 #include <sdsl/io.hpp>
+#include <time.hpp>
 
 using namespace std;
 
 //#include<chrono>
 //#include<ctime>
 
-using namespace std::chrono;
+using namespace ::util::time;
 
 bool get_file_content(string filename, vector<string> & vector_of_strings)
 {
@@ -134,7 +135,7 @@ std::string get_type(const std::string &file){
 
 
 template<class index_type>
-void query(const std::string &file, const std::string &queries){
+void query(const std::string &file, const std::string &queries, const uint64_t limit){
     vector<string> dummy_queries;
     bool result = get_file_content(queries, dummy_queries);
 
@@ -149,10 +150,8 @@ void query(const std::string &file, const std::string &queries){
     std::ifstream ifs;
     uint64_t nQ = 0;
 
-    high_resolution_clock::time_point start, stop;
-    double total_time = 0.0;
-    duration<double> time_span;
-
+    uint64_t total_time, total_utime;
+    ::util::time::usage::usage_type start, stop;
     if(result)
     {
 
@@ -174,25 +173,18 @@ void query(const std::string &file, const std::string &queries){
             // vector<string> gao = get_gao_min_opt(query, graph);
             // cout << gao [0] << " - " << gao [1] << " - " << gao[2] << endl;
 
-            start = high_resolution_clock::now();
-
-            rdfcsa::ltj_algorithm<index_type> ltj(&query, &graph);
-
             typedef typename rdfcsa::ltj_algorithm<index_type>::var_type var_type;
             typedef typename rdfcsa::ltj_algorithm<index_type>::value_type value_type;
             typedef typename rdfcsa::ltj_algorithm<index_type>::tuple_type tuple_type;
             typedef std::vector<tuple_type> results_type;
             results_type res;
 
-            std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-
-            ltj.join(res, 1000, 600);
-            //std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-
-            stop = high_resolution_clock::now();
-            time_span = duration_cast<microseconds>(stop - start);
-            total_time = time_span.count();
-
+            start = ::util::time::usage::now();
+            rdfcsa::ltj_algorithm<index_type> ltj(&query, &graph);
+            ltj.join(res, limit, 600);
+            stop = ::util::time::usage::now();
+            total_time = (uint64_t) duration_cast<nanoseconds>(stop.elapsed - start.elapsed);
+            total_utime = (uint64_t) duration_cast<nanoseconds>(stop.user - start.user);
             /*std::unordered_map<uint8_t, std::string> ht;
             for(const auto &p : hash_table_vars){
                 ht.insert({p.second, p.first});
@@ -203,16 +195,17 @@ void query(const std::string &file, const std::string &queries){
             ltj.print_gao(ht);
             cout << "##########" << endl;*/
 
-            cout << nQ <<  ";" << res.size() << ";" << (unsigned long long)(total_time*1000000000ULL) << endl;
+            //cout << nQ <<  ";" << res.size() << ";" << total_time << ";" << total_utime << endl;
+            cout << nQ <<  ";" << res.size() << ";" << total_time << endl;
             nQ++;
 
-            for(auto& tuple : res){
+            /*for(auto& tuple : res){
                 std::sort(tuple.begin(), tuple.end());
                 for(const auto& r : tuple){
                     std::cerr << (uint64_t) r.first << "=" << r.second << " ";
                 }
                 std::cerr << std::endl;
-            }
+            }*/
             // cout << std::chrono::duration_cast<std::chrono::nanoseconds> (end - begin).count() << std::endl;
 
             //cout << "RESULTS QUERY " << count << ": " << number_of_results << endl;
@@ -228,16 +221,15 @@ int main(int argc, char* argv[])
 
     typedef rdfcsa::rdfcsa_dual index_type;
     //typedef ring::c_ring ring_type;
-    if(argc != 3){
-        std::cout << "Usage: " << argv[0] << " <index> <queries>" << std::endl;
+    if(argc != 4){
+        std::cout << "Usage: " << argv[0] << " <index> <queries> <limit>" << std::endl;
         return 0;
     }
 
     std::string index = argv[1];
     std::string queries = argv[2];
-    query<index_type>(index, queries);
-
-
+    uint64_t limit = std::atoll(argv[3]);
+    query<index_type>(index, queries, limit);
 
 	return 0;
 }

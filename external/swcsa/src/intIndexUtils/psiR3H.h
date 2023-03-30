@@ -55,8 +55,8 @@
 //encoded with respect to the smallest value of each section.
 // #define R3H_WITHGAPS  --> see "r3/psiHuffmanRLE3.h" !
 
-
 #include "./r3/psiHuffmanRLER3.h"
+//#include "./r3/psiPlainRLER3.h" 
 
 #define SUB 0
 #define PRE 1
@@ -107,6 +107,17 @@ void getPsiR3HValueBuffer(CompressedPsiR3H *cPsi, uint *buffer, size_t ini, size
 // returns 1 normally if the searched values were found. 0 if no values where found.
 int getfindPsiR3HValueBuffer(CompressedPsiR3H *cPsi, uint *buffer, size_t ini, size_t end, ulong fst, ulong sec, ulong *i1, ulong *i2);
 int getfindPsiR3HValue(CompressedPsiR3H *cPsi, size_t ini, size_t end, ulong fst, ulong sec, ulong *i1, ulong *i2);
+
+
+//simulates decompression from ini to end, and during the process:
+// sets in i1 de position (from ini on) of the fst   value >= fst  and <=sec
+// stops if i1 was set
+// returns 0 if all values are < fst.
+// NO LONGER returns 1 if a value >= fst and <=sec was found
+// returns x+1, where x is  the first value >= fst and <=sec was found    (+1 to ensure zero is not returned as a valid value);
+
+ulong getfindPsiLeftOnlyR3HValue(CompressedPsiR3H *cPsi, size_t ini, size_t end, ulong fst, ulong sec, ulong *i1);
+
 
 void storePsiR3H(CompressedPsiR3H *compressedPsi, char *filename);
 CompressedPsiR3H loadPsiR3H(char *filename);

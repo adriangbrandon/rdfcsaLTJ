@@ -46,7 +46,7 @@ int parseFileADRIANformat_IntoGraph(const char *infilebase, struct graphDB *grap
 	
 	printf("\n");
 	printf("\n -------------------------------");
-	printf("\n Processing file: %s ", infilebase);
+	printf("\n Processing inputfile: %s ", infilebase);
 	printf("\n -------------------------------\n");
 	
 	while (3== fscanf(f, "%u %u %u\n", &s, &p, &o)) {
