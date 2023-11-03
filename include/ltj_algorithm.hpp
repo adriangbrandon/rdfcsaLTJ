@@ -29,6 +29,7 @@
 #include <gao_adaptive.hpp>
 #include <gao_simple.hpp>
 #include <rdfcsa_dual.hpp>
+#include <results_collector.hpp>
 
 namespace rdfcsa {
 
@@ -45,6 +46,7 @@ namespace rdfcsa {
         typedef std::unordered_map<var_type, std::vector<ltj_iter_type*>> var_to_iterators_type;
         typedef std::vector<std::pair<var_type, value_type>> tuple_type;
         typedef std::chrono::high_resolution_clock::time_point time_point_type;
+        typedef ::util::results_collector<tuple_type> results_type;
 #if ADAPTIVE
         typedef gao::gao_adaptive<index_type, var_type, const_type> gao_type;
 #else
@@ -164,7 +166,7 @@ namespace rdfcsa {
         * @param limit_results     Limit of results
         * @param timeout_seconds   Timeout in seconds
         */
-        void join(std::vector<tuple_type> &res,
+        void join(results_type &res,
                   const size_type limit_results = 0, const size_type timeout_seconds = 0){
             if(m_is_empty) return;
             time_point_type start = std::chrono::high_resolution_clock::now();
@@ -182,7 +184,7 @@ namespace rdfcsa {
          * @param limit_results     Limit of results
          * @param timeout_seconds   Timeout in seconds
          */
-        bool search(const size_type j, tuple_type &tuple, std::vector<tuple_type> &res,
+        bool search(const size_type j, tuple_type &tuple, results_type &res,
                     const time_point_type start,
                     const size_type limit_results = 0, const size_type timeout_seconds = 0){
 
@@ -198,7 +200,7 @@ namespace rdfcsa {
 
             if(j == m_gao.size()){
                 //Report results
-                res.emplace_back(tuple);
+                res.add(tuple);
             }else{
                 var_type x_j = m_gao.next();
                 std::vector<ltj_iter_type*>& itrs = m_var_to_iterators[x_j];

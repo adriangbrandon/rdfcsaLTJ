@@ -34,7 +34,9 @@ using namespace std;
 //#include<chrono>
 //#include<ctime>
 
-using namespace ::util::time;
+//using namespace ::util::time;
+
+using namespace std::chrono;
 
 bool get_file_content(string filename, vector<string> & vector_of_strings)
 {
@@ -151,7 +153,7 @@ void query(const std::string &file, const std::string &queries, const uint64_t l
     uint64_t nQ = 0;
 
     uint64_t total_time, total_utime;
-    ::util::time::usage::usage_type start, stop;
+    high_resolution_clock::time_point start, stop;
     if(result)
     {
 
@@ -176,15 +178,15 @@ void query(const std::string &file, const std::string &queries, const uint64_t l
             typedef typename rdfcsa::ltj_algorithm<index_type>::var_type var_type;
             typedef typename rdfcsa::ltj_algorithm<index_type>::value_type value_type;
             typedef typename rdfcsa::ltj_algorithm<index_type>::tuple_type tuple_type;
-            typedef std::vector<tuple_type> results_type;
+            typedef ::util::results_collector<tuple_type> results_type;
             results_type res;
 
-            start = ::util::time::usage::now();
+            start = chrono::high_resolution_clock::now();
             rdfcsa::ltj_algorithm<index_type> ltj(&query, &graph);
             ltj.join(res, limit, 600);
-            stop = ::util::time::usage::now();
-            total_time = (uint64_t) duration_cast<nanoseconds>(stop.elapsed - start.elapsed);
-            total_utime = (uint64_t) duration_cast<nanoseconds>(stop.user - start.user);
+            stop = chrono::high_resolution_clock::now();
+            total_time = duration_cast<nanoseconds>(stop - start).count();
+            //total_utime = (uint64_t) duration_cast<nanoseconds>(stop.user - start.user);
             /*std::unordered_map<uint8_t, std::string> ht;
             for(const auto &p : hash_table_vars){
                 ht.insert({p.second, p.first});
