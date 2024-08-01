@@ -1,6 +1,6 @@
 # RdfcsaLTJ
 
-Repository for the source code of the engine presented in the paper New Techniques and Compact Indices for Worst-Case Optimal Graph Joins.
+Repository for the source code of the engine presented in the paper New Compressed Indices for Multijoins on Graph Databases.
 
 ## Instructions
 
